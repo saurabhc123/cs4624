@@ -1,3 +1,4 @@
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.mllib.regression.LabeledPoint
 /**
@@ -10,8 +11,8 @@ trait FeatureGenerator {
 
   def generateFeatures(tweets: RDD[Tweet]): RDD[LabeledPoint]
 
-  def saveGenerator(filePath: String): Unit
+  def saveGenerator(filePath: String, sc: SparkContext): Unit
 
-  def loadGenerator(filePath: String): Unit
+  def loadGenerator(filePath: String, sc: SparkContext): Unit
 
 }

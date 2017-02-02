@@ -3,7 +3,7 @@
   */
 object FeatureGeneratorFactory {
   def getGenerator : FeatureGenerator ={
-    throw new NotImplementedError()
+    new WordVectorGenerator()
   }
 
 }
