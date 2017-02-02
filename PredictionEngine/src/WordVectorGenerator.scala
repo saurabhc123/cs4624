@@ -1,6 +1,6 @@
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.feature.{Word2Vec, Word2VecModel}
-import org.apache.spark.mllib.linalg.{Vector, VectorPub, Vectors}
+import org.apache.spark.mllib.linalg.{Vector, VectorPub}
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 import sun.plugin.dom.exception.InvalidStateException
@@ -43,7 +43,6 @@ class WordVectorGenerator extends FeatureGenerator{
 
     // Create feature vectors
     val wordFeaturePairTrain = reviewWordsPairs mapValues wordFeatures
-    //val intermediateVectors = wordFeaturePair.mapValues(x => x.map(_.asBreeze))
     val inter2Train = wordFeaturePairTrain.filter(_._2.nonEmpty)
     val avgWordFeaturesPairTrain = inter2Train mapValues avgWordFeatures
     val featuresPairTrain = avgWordFeaturesPairTrain join samplePairs mapValues {
