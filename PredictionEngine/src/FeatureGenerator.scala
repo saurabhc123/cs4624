@@ -10,4 +10,8 @@ trait FeatureGenerator {
 
   def generateFeatures(tweets: RDD[Tweet]): RDD[LabeledPoint]
 
+  def saveGenerator(filePath: String): Unit
+
+  def loadGenerator(filePath: String): Unit
+
 }
