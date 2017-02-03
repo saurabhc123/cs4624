@@ -4,7 +4,6 @@ import org.apache.spark.mllib.feature.{Word2Vec, Word2VecModel}
 import org.apache.spark.mllib.linalg.{Vector, VectorPub}
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
-import sun.plugin.dom.exception.InvalidStateException
 
 import scala.util.Try
 /**
@@ -66,7 +65,7 @@ class WordVectorGenerator extends FeatureGenerator{
 
   def checkModel(): Unit = {
     if (Model == null){
-      throw new InvalidStateException("Model has not been loaded or trained!")
+      throw new IllegalStateException("Model has not been loaded or trained!")
     }
   }
 
