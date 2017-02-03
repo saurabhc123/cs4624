@@ -18,3 +18,5 @@ project/plugins/project/
 
 #SourceLibraries
 lib
+.idea/workspace.xml
+build/
