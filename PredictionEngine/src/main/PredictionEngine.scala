@@ -6,6 +6,6 @@ package main
 object PredictionEngine extends App{
   // this is the entry point for our application
   println("Hello world")
-  val gen = FeatureGeneratorFactory.getGenerator
-  println(gen.getClass)
+
+  val experiment = new Experiment(FeatureGeneratorType.Word2Vec, ClassifierType.LogisticRegression)
 }

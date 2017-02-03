@@ -1,5 +1,7 @@
 package main
 
+
+import main.DataType.DataType
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
@@ -8,13 +10,15 @@ import org.apache.spark.rdd.RDD
   * Allows a "training" phase followed by a generation phase
   * Created by Eric on 2/1/2017.
   */
-trait FeatureGenerator {
-  def train(tweets: RDD[Tweet]): Unit
+trait IFeatureGenerator  extends java.io.Serializable {
 
-  def generateFeatures(tweets: RDD[Tweet]): RDD[LabeledPoint]
+  def generateFeatures(tweets: RDD[Tweet], dataType: DataType): RDD[LabeledPoint]
 
-  def saveGenerator(filePath: String, sc: SparkContext): Unit
+}
 
-  def loadGenerator(filePath: String, sc: SparkContext): Unit
 
+
+object DataType extends Enumeration{
+  type DataType = Value
+  val TRAINING, TEST = Value
 }

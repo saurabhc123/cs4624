@@ -1,7 +1,8 @@
 package FeatureGeneratorImpl
 
 
-import main.{FeatureGenerator, Tweet}
+import main.DataType._
+import main.{IFeatureGenerator, Tweet}
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.feature.{Word2Vec, Word2VecModel}
 import org.apache.spark.mllib.linalg.{Vector, VectorPub}
@@ -13,9 +14,18 @@ import scala.util.Try
   * A feature generator for word vector generation
   * Created by Eric on 2/2/2017.
   */
-class WordVectorGenerator extends FeatureGenerator{
+class WordVectorGenerator extends IFeatureGenerator{
   var Model: Word2VecModel = _
-  override def train(tweets: RDD[Tweet]): Unit = {
+  def train(tweets: RDD[Tweet]): Unit = {
+
+    def cleanHtml(str: String) = str.replaceAll( """<(?!\/?a(?=>|\s.*>))\/?.*?>""", "")
+
+    def cleanTweetHtml(sample: Tweet) = sample copy (text = cleanHtml(sample.text))
+
+    def cleanWord(str: String) = str.split(" ").map(_.trim.toLowerCase).filter(_.nonEmpty)
+      .map(_.replaceAll("\\W", "")).reduceOption((x, y) => s"$x $y")
+
+    def wordOnlySample(sample: Tweet) = sample copy (text = cleanWord(sample.text).getOrElse(""))
 
     val cleanTrainingTweets = tweets map cleanTweetHtml
 
@@ -27,8 +37,20 @@ class WordVectorGenerator extends FeatureGenerator{
     Model = new Word2Vec().fit(reviewWordsPairs.values)
   }
 
-  override def generateFeatures(tweets: RDD[Tweet]): RDD[LabeledPoint] = {
+  override def generateFeatures(tweets: RDD[Tweet], dataType: DataType): RDD[LabeledPoint] = {
+    if (dataType == TRAINING){
+      train(tweets)
+    }
     checkModel()
+    def cleanHtml(str: String) = str.replaceAll( """<(?!\/?a(?=>|\s.*>))\/?.*?>""", "")
+
+    def cleanTweetHtml(sample: Tweet) = sample copy (text = cleanHtml(sample.text))
+
+    def cleanWord(str: String) = str.split(" ").map(_.trim.toLowerCase).filter(_.nonEmpty)
+      .map(_.replaceAll("\\W", "")).reduceOption((x, y) => s"$x $y")
+
+    def wordOnlySample(sample: Tweet) = sample copy (text = cleanWord(sample.text).getOrElse(""))
+
     val cleanTrainingTweets = tweets map cleanTweetHtml
     val wordOnlyTrainSample = cleanTrainingTweets map wordOnlySample
     val samplePairs = wordOnlyTrainSample.map(s => s.identifier -> s)
@@ -57,12 +79,12 @@ class WordVectorGenerator extends FeatureGenerator{
 
 
 
-  override def saveGenerator(filePath: String, sc :SparkContext): Unit = {
+  def saveGenerator(filePath: String, sc :SparkContext): Unit = {
     checkModel()
     Model.save(sc,filePath)
   }
 
-  override def loadGenerator(filePath: String, sc: SparkContext): Unit = {
+  def loadGenerator(filePath: String, sc: SparkContext): Unit = {
     Model = Word2VecModel.load(sc,filePath)
   }
 
@@ -73,14 +95,7 @@ class WordVectorGenerator extends FeatureGenerator{
   }
 
 
-  private def cleanHtml(str: String) = str.replaceAll( """<(?!\/?a(?=>|\s.*>))\/?.*?>""", "")
 
-  private def cleanTweetHtml(sample: Tweet) = sample copy (text = cleanHtml(sample.text))
-
-  private def cleanWord(str: String) = str.split(" ").map(_.trim.toLowerCase).filter(_.nonEmpty)
-    .map(_.replaceAll("\\W", "")).reduceOption((x, y) => s"$x $y")
-
-  private def wordOnlySample(sample: Tweet) = sample copy (text = cleanWord(sample.text).getOrElse(""))
 
 
 

@@ -34,9 +34,10 @@ object ExperimentalMetrics{
   }
 }
 object MetricsCalculator {
-  def GenerateClassifierMetrics(predictionAndLabels: RDD[(Double, Double)]) : ExperimentalMetrics = {
-    val metrics = new MulticlassMetrics(predictionAndLabels)
-    val otherMetrics = new MultilabelMetrics(predictionAndLabels.map(elem => (Array(elem._1), Array(elem._2))))
+  def GenerateClassifierMetrics(predictionResults: RDD[PredictionResult]) : ExperimentalMetrics = {
+    val predictionAndLabel = predictionResults.map(result => (result.predictedLabel, result.trueLabel))
+    val metrics = new MulticlassMetrics(predictionAndLabel)
+    val otherMetrics = new MultilabelMetrics(predictionAndLabel.map(elem => (Array(elem._1), Array(elem._2))))
     new ExperimentalMetrics(metrics,otherMetrics)
   }
 
