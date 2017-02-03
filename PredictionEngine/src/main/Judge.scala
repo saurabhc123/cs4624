@@ -9,7 +9,7 @@ import main.Interfaces.{DataType, IStockDataRetriever, ITweetDataRetriever}
   * This class requires that the tweets that can be read have stocks, judges, times, and label defined
   * Created by Eric on 2/3/2017.
   */
-class Judge(val identifier: String, iTweetDataRetriever: ITweetDataRetriever, iStockDataRetriever: IStockDataRetriever) {
+class Judge(val identifier: String, iTweetDataRetriever: ITweetDataRetriever, iStockDataRetriever: IStockDataRetriever) extends java.io.Serializable{
 
   private val myTweets = iTweetDataRetriever.readTweets(DataType.TEST)
     .filter(tweet => tweet.time.isDefined)

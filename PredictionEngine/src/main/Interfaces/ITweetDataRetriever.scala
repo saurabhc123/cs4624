@@ -7,6 +7,6 @@ import org.apache.spark.rdd.RDD
 /**
   * Created by Eric on 2/3/2017.
   */
-trait ITweetDataRetriever {
+trait ITweetDataRetriever extends java.io.Serializable {
   def readTweets(tweetType: DataType): RDD[Tweet]
 }
