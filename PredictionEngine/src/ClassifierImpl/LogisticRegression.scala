@@ -1,8 +1,11 @@
+package ClassifierImpl
+
+import main.Classifier
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.classification.{LogisticRegressionModel, LogisticRegressionWithLBFGS}
+import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
-import org.apache.spark.mllib.linalg.{Vector, VectorPub}
 /**
   * Created by Eric on 2/2/2017.
   */
