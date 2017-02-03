@@ -1,5 +1,6 @@
-package main
+package main.Interfaces
 
+import main.DataTypes.PredictionResult
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 

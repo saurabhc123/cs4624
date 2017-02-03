@@ -1,7 +1,5 @@
-package main
+package main.Interfaces
 
-import org.apache.spark.SparkContext
-import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 /**

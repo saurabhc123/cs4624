@@ -1,4 +1,7 @@
 package main
+
+import main.Factories.{ClassifierType, FeatureGeneratorType}
+
 /**
   * A singleton class that will serve as the entry point
   * Created by Eric on 2/1/2017.

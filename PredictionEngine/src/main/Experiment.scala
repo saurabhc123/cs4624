@@ -1,7 +1,8 @@
 package main
 
-import main.ClassifierType.ClassifierType
-import main.FeatureGeneratorType.FeatureGeneratorType
+import main.DataTypes.Tweet
+import main.Factories.ClassifierType.ClassifierType
+import main.Factories.FeatureGeneratorType.FeatureGeneratorType
 
 /**
   * Created by ericrw96 on 2/2/17.

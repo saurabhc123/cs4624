@@ -1,8 +1,7 @@
-package main
+package main.Interfaces
 
-
-import main.DataType.DataType
-import org.apache.spark.SparkContext
+import main.DataTypes.Tweet
+import main.Interfaces.DataType.DataType
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 /**

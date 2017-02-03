@@ -1,16 +1,16 @@
-package main
+package main.Factories
 
-import FeatureGeneratorImpl.WordVectorGenerator
-import main.FeatureGeneratorType.FeatureGeneratorType
+import main.Factories.FeatureGeneratorType.FeatureGeneratorType
+import main.Implementations.FeatureGeneratorImpl.WordVectorGenerator
+import main.Interfaces.IFeatureGenerator
 
 /**
   * Created by Eric on 2/1/2017.
   */
 object FeatureGeneratorFactory {
   def getFeatureGenerator(featureGeneratorType: FeatureGeneratorType) : IFeatureGenerator ={
-    import main.FeatureGeneratorType._
     featureGeneratorType match {
-      case Word2Vec => new WordVectorGenerator
+      case FeatureGeneratorType.Word2Vec => new WordVectorGenerator
     }
   }
 

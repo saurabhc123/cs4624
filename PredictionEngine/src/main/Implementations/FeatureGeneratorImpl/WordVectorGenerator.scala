@@ -1,8 +1,9 @@
-package FeatureGeneratorImpl
+package main.Implementations.FeatureGeneratorImpl
 
 
-import main.DataType._
-import main.{IFeatureGenerator, Tweet}
+import main.DataTypes.Tweet
+import main.Interfaces.DataType._
+import main.Interfaces.IFeatureGenerator
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.feature.{Word2Vec, Word2VecModel}
 import org.apache.spark.mllib.linalg.{Vector, VectorPub}

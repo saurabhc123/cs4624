@@ -1,4 +1,4 @@
-package main
+package main.DataTypes
 
 /**
   * This class will serve as the main way that data is transferred between each stage
