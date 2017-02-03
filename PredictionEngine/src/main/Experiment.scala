@@ -11,9 +11,9 @@ class Experiment(private val featureGeneratorType: FeatureGeneratorType, private
 
   private val sc = SparkContextManager.getContext
 
-  private val exampleTrainSet = sc.parallelize(Seq(Tweet("a", "b o b", Some(0.0)), Tweet("b", "a a b o b", Some(1.0))))
+  private val exampleTrainSet = sc.parallelize(Seq(Tweet("a", "hello world", Some(0.0)), Tweet("b", "goodbye everyone", Some(1.0)), Tweet("a2", "hello world", Some(0.0)), Tweet("ab", "hello world", Some(1.0)), Tweet("abc", "hello world", Some(0.0)), Tweet("abd", "hello world", Some(0.0))))
 
-  private val exampleTestSet = sc.parallelize(Seq(Tweet("aa", "bb oo bb b o b", Some(0.0)), Tweet("bb", "aa aa bb oo bb a a b o b", Some(1.0))))
+  private val exampleTestSet = sc.parallelize(Seq(Tweet("aa", "hello everyone", Some(0.0)), Tweet("bb", "goodbye world", Some(1.0))))
 
   private val metrics = orchestrator.performExperiment(exampleTrainSet, exampleTestSet)
 
