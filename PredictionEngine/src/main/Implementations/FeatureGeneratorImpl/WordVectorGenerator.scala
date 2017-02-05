@@ -72,7 +72,7 @@ class WordVectorGenerator extends IFeatureGenerator{
     val inter2Train = wordFeaturePairTrain.filter(_._2.nonEmpty)
     val avgWordFeaturesPairTrain = inter2Train mapValues avgWordFeatures
     val featuresPairTrain = avgWordFeaturesPairTrain join samplePairs mapValues {
-      case (features, Tweet(id, tweetText, label)) => LabeledPoint(label.get, features)
+      case (features, Tweet(id, tweetText, label,time,judge,stock)) => LabeledPoint(label.get, features)
     }
     val trainingSet = featuresPairTrain.values
     trainingSet
