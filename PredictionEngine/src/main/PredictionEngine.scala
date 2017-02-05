@@ -9,6 +9,5 @@ import main.Factories.{ClassifierType, FeatureGeneratorType}
 object PredictionEngine extends App{
   // this is the entry point for our application
   println("Hello world")
-
   val experiment = new Experiment(FeatureGeneratorType.Word2Vec, ClassifierType.LogisticRegression)
 }
