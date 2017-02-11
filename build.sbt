@@ -1,7 +1,7 @@
-lazy val predictionEngine = project
-lazy val pricingData = project
+lazy val PredictionEngine = project
+lazy val PricingData = project
 lazy val root = (project in file("."))
 .aggregate(
-    predictionEngine,
-    pricingData
+    PredictionEngine,
+    PricingData
 )

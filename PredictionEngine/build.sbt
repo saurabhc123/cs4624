@@ -1,4 +1,4 @@
-lazy val predictionEngine = (project in file("."))
+lazy val PredictionEngine = (project in file("."))
 .settings(
     name := "PredictionEngine",
     organization := "main",
