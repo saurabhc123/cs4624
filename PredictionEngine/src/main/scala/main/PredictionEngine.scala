@@ -11,4 +11,5 @@ object PredictionEngine extends App{
   //println("Hello world")
   //val experiment = new Experiment(FeatureGeneratorType.Word2Vec, ClassifierType.LogisticRegression)
   StockDecisions.makeRun()
+  StockActions.makeRun()
 }

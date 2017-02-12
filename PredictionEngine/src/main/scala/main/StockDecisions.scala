@@ -2,7 +2,7 @@ package main
 
 import java.time.Instant
 
-
+import main.DataTypes.Tweet
 import org.apache.spark.rdd.RDD
 object Sentiment extends Enumeration {
   type Sentiment = Value
@@ -10,7 +10,6 @@ object Sentiment extends Enumeration {
 }
 
 import main.Sentiment.Sentiment
-
 case class StockTweet(symbol: String, text:String, sentiment: Sentiment, judgeId:String, timestamp: Instant ){}
 /**
   * Created by Eric on 2/11/2017.
@@ -19,15 +18,36 @@ object StockDecisions{
 
 
   val start = 0.5
-  val end = 0
+  val end = 0.1
   def makeRun(): Unit ={
     val stockTweets = getTweets("A", Instant.now(), Instant.now())
+    stockTweets.collect().foreach(tweet => CalcJudgeIndividualWeight(tweet.judgeId,stockTweets,tweet.timestamp))
     val finalScoreOfTweets = finalScore(stockTweets, start, end)
     println(s"The final score is stock A is $finalScoreOfTweets")
   }
   private val lambda = 0.05
+  private def getRawPrediction(tweet: StockTweet): Double = {
+    val priceAtTweetTime = StockActions.getPrice(tweet.symbol, tweet.timestamp)
+    val priceAfterTimeInterval = StockActions.getPrice(tweet.symbol, tweet.timestamp.plus(Judge.confirmationTimeWindow))
+
+    val deltaResult = (priceAfterTimeInterval - priceAtTweetTime) / priceAtTweetTime
+    val opinion = if (tweet.sentiment == Sentiment.POSITIVE) 1 else -1
+    deltaResult * opinion
+  }
+
+  private val weightMap: scala.collection.mutable.Map[(String,Instant),Double] = scala.collection.mutable.Map[(String,Instant),Double]()
+  private def CalcJudgeIndividualWeight(judgeId : String, stockTweets: RDD[StockTweet], timestamp: Instant): Double = {
+    val myTweets = stockTweets.filter(st => judgeId == st.judgeId)
+    val tweetsBeforeTime = myTweets.filter(tweet => tweet.timestamp.isBefore(timestamp.minus(Judge.confirmationTimeWindow)))
+    val rawPredictionScores = tweetsBeforeTime.map(tweet => getRawPrediction(tweet))
+    val scoreMean = rawPredictionScores.mean()
+    val scoreStdDev = rawPredictionScores.stdev()
+    val result = scoreMean / scoreStdDev
+    weightMap((judgeId,timestamp)) = result
+    weightMap((judgeId,timestamp))
+  }
   def GetJudgeIndividualWeight(judgeId: String, timeStamp :Instant): Double ={
-    10
+    weightMap.getOrElse((judgeId,timeStamp), Double.NaN)
   }
 
   def getTweets(symbol: String, startTime: Instant, endTime: Instant): RDD[StockTweet] = {
@@ -35,7 +55,7 @@ object StockDecisions{
     text.map(x => x.split(','))
       .map(x => StockTweet(x(0),x(1),
            if (x(2) == "1")Sentiment.POSITIVE else Sentiment.NEGATIVE,
-            x(3), Instant.now()))
+            x(3), Instant.parse(x(4))))
   }
 
 
@@ -69,7 +89,7 @@ object StockDecisions{
     val only_these_sent = tweets.filter(x => x.sentiment == sentiment)
     val TweetAndInd = getDegreesOfIndependence(only_these_sent)
     TweetAndInd
-      .map(tweet => GetJudgeIndividualWeight(tweet._1.judgeId,tweet._1.timestamp) * tweet._2)
+      .map(tweet => GetJudgeIndividualWeight(tweet._1.judgeId,tweet._1.timestamp) * tweet._2).filter(!_.isNaN).filter(!_.isInfinity)
       .sum()
   }
 
