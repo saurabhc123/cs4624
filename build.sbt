@@ -7,3 +7,4 @@ lazy val root = (project in file("."))
     pricingData,
     virtualPortfolio
 )
+retrieveManaged := true
