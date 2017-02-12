@@ -5,3 +5,4 @@ lazy val root = (project in file("."))
     PredictionEngine,
     PricingData
 )
+retrieveManaged := true
