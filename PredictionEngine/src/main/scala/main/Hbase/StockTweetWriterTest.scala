@@ -13,5 +13,10 @@ object StockTweetWriterTest {
     StockTweetWriter.write(st)
     val st2 = StockTweet("id2", "text", "j1", Instant.now, sentiment = Some(Sentiment.POSITIVE))
     StockTweetWriter.write(st2)
+
+    // now to read
+
+    println(StockTweetWriter.read("id1"))
+    println(StockTweetWriter.read("id2"))
   }
 }
