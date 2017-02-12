@@ -10,7 +10,7 @@ object Sentiment extends Enumeration {
 }
 
 import main.Sentiment.Sentiment
-case class StockTweet(symbol: String, text:String, sentiment: Sentiment, judgeId:String, timestamp: Instant ){}
+case class StockTweet(symbol: String, id:String, text:String, sentiment: Sentiment, judgeId:String, timestamp: Instant, rawPredictionScore : Option[Double] = None,sentimentOrder : Option[Int] = None ){}
 /**
   * Created by Eric on 2/11/2017.
   */
@@ -53,7 +53,7 @@ object StockDecisions{
   def getTweets(symbol: String, startTime: Instant, endTime: Instant): RDD[StockTweet] = {
     val text = SparkContextManager.getContext.textFile("dummy_stock_tweets.txt")
     text.map(x => x.split(','))
-      .map(x => StockTweet(x(0),x(1),
+      .map(x => StockTweet(x(0),"",x(1),
            if (x(2) == "1")Sentiment.POSITIVE else Sentiment.NEGATIVE,
             x(3), Instant.parse(x(4))))
   }

@@ -1,5 +1,7 @@
 package main
 
+import java.time.Instant
+
 import main.Factories.{ClassifierType, FeatureGeneratorType}
 
 /**
@@ -12,4 +14,5 @@ object PredictionEngine extends App{
   //val experiment = new Experiment(FeatureGeneratorType.Word2Vec, ClassifierType.LogisticRegression)
   StockDecisions.makeRun()
   StockActions.makeRun()
+  StockOrchestrator.Orchestrate(Instant.now(), Instant.now().plus(Judge.confirmationTimeWindow).plus(Judge.confirmationTimeWindow), Judge.confirmationTimeWindow, Judge.confirmationTimeWindow)
 }
