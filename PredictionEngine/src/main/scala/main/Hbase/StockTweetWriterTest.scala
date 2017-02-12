@@ -2,7 +2,7 @@ package main.Hbase
 
 import java.time.Instant
 
-import main.{Sentiment, StockTweet}
+import main.{Sentiment, SparkContextManager, StockTweet}
 
 /**
   * Created by Eric on 2/12/2017.
@@ -19,4 +19,10 @@ object StockTweetWriterTest {
     println(StockTweetWriter.read("id1"))
     println(StockTweetWriter.read("id2"))
   }
+  def readFromCsvWriteToDB(filename: String): Unit = {
+    val file = SparkContextManager.getContext.textFile(filename)
+    val tweets = file.map(line => line.split("\",\"").map(x => x.replaceAll("\"", ""))).map(arr => StockTweet(arr(0), arr(2),arr(5) ,Instant.parse(arr(4)), symbol = Some(arr(8))))
+    tweets.foreach(StockTweetWriter.write)
+  }
+
 }

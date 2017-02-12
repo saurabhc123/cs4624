@@ -16,7 +16,7 @@ object StockTweetWriter {
 
 
   def write(stockTweet : StockTweet) = {
-    val put = new Put(Bytes.toBytes(stockTweet.id))
+    val put = new Put(Bytes.toBytes(stockTweet.id),stockTweet.timestamp.toEpochMilli)
     put.addColumn(Bytes.toBytes("base_data"),Bytes.toBytes("timestamp"), Bytes.toBytes(stockTweet.timestamp.toString))
     put.addColumn(Bytes.toBytes("base_data"),Bytes.toBytes("text"), Bytes.toBytes(stockTweet.text))
     put.addColumn(Bytes.toBytes("base_data"),Bytes.toBytes("judgeid"), Bytes.toBytes(stockTweet.judgeId))
