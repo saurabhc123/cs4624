@@ -37,6 +37,9 @@ import org.apache.hadoop.hbase.filter.BinaryComparator
     def put(put: Put): Unit ={
       table.put(put)
     }
+    def get(get:Get): Result = {
+      table.get(get)
+    }
 
     def getValueAt(columnFamily: String, column: String, rowKey: String): String = {
       // Make a new get object to handle getting the row from the table
