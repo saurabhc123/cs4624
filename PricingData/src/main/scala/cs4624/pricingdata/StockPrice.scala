@@ -1,7 +1,7 @@
 package cs4624.pricingdata
 
 import org.apache.hadoop.hbase.TableName
-import org.apache.hadoop.hbase.client.{Connection, Put}
+import org.apache.hadoop.hbase.client.{Connection, Get, Put, Scan}
 import org.apache.hadoop.hbase.util.Bytes
 import org.joda.time.{DateTime, Instant}
 
@@ -33,5 +33,21 @@ object StockPrices {
     def writeAll(implicit connection: Connection): Unit = {
       trav.foreach(_.write)
     }
+  }
+
+  def query(symbol: String, start: Instant, end: Instant)(implicit connection: Connection): Seq[StockPrice] = {
+    val table = connection.getTable(tableName)
+    val scan = new Scan()
+    scan.setRowPrefixFilter(Bytes.toBytes(s"$symbol-"))
+    val price = Bytes.toBytes("price")
+    scan.addColumn(price, price)
+    import scala.collection.JavaConversions._
+    val prices = table.getScanner(scan).map { result =>
+      val price = Bytes.toString(result.getValue(price, price)).toDouble
+      val time = new Instant(result.current().getTimestamp)
+      StockPrice(symbol, time, price)
+    }.toSeq
+    table.close()
+    prices
   }
 }
