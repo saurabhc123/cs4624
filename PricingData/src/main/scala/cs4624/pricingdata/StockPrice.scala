@@ -11,8 +11,8 @@ import org.joda.time.{DateTime, Instant}
 case class StockPrice(symbol: String, time: Instant, price: Double) {
   def write(implicit connection: Connection): Unit = {
     val table = connection.getTable(StockPrices.tableName)
-    val put = new Put(Bytes.toBytes(symbol))
-    put.addColumn(Bytes.toBytes("price"), Bytes.toBytes(""), time.getMillis, Bytes.toBytes(price))
+    val put = new Put(Bytes.toBytes(s"$symbol-${time.getMillis}"))
+    put.addColumn(Bytes.toBytes("price"), Bytes.toBytes("price"), time.plus(1000).getMillis, Bytes.toBytes(price.toString))
     table.put(put)
     table.close()
   }
@@ -31,14 +31,7 @@ object StockPrices {
 
   implicit class RichTraversable(val trav: Traversable[StockPrice]) {
     def writeAll(implicit connection: Connection): Unit = {
-      trav.groupBy(_.symbol).foreach { case (symbol, prices) =>
-        val table = connection.getTable(tableName)
-        val put = prices.foldLeft(new Put(Bytes.toBytes(symbol))) { case (put, price) =>
-          put.addColumn(Bytes.toBytes("price"), Bytes.toBytes(""), price.time.getMillis, Bytes.toBytes(price.price))
-        }
-        table.put(put)
-        table.close()
-      }
+      trav.foreach(_.write)
     }
   }
 }

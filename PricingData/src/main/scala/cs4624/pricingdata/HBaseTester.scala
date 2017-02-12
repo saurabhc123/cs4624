@@ -1,12 +1,13 @@
 package cs4624.pricingdata
 
-import org.apache.hadoop.hbase.client.ConnectionFactory
+import org.apache.hadoop.hbase.HBaseConfiguration
+import org.apache.hadoop.hbase.client._
 
 /**
   * Created by joeywatts on 2/12/17.
   */
 object HBaseTester extends App {
-  implicit val connection = ConnectionFactory.createConnection()
+  implicit val connection = ConnectionFactory.createConnection(HBaseConfiguration.create())
 
   // Read all the quotes from the CSV and print them out.
   import scala.io.Source
