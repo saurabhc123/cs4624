@@ -20,7 +20,7 @@ case class StockPrice(symbol: String, time: Instant, price: Double) {
 
 object StockPrices {
 
-  val tableName: TableName = TableName.valueOf(Bytes.toBytes("cs4624:tweet_stock_trading:prices"))
+  val tableName: TableName = TableName.valueOf(Bytes.toBytes("tweetstocktrading_prices"))
 
   implicit class RichTraversableOnce(val trav: TraversableOnce[StockPrice]) {
     def getPrice(symbol: String, instant: Instant): Option[Double] = {
