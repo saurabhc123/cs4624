@@ -41,6 +41,7 @@ object StockPrices {
     scan.setRowPrefixFilter(Bytes.toBytes(s"$symbol-"))
     val price = Bytes.toBytes("price")
     scan.addColumn(price, price)
+    scan.setTimeRange(start.getMillis, end.getMillis)
     import scala.collection.JavaConversions._
     val prices = table.getScanner(scan).map { result =>
       val priceValue = Bytes.toString(result.getValue(price, price)).toDouble
