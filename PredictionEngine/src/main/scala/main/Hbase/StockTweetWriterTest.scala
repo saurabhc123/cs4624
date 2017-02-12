@@ -21,7 +21,11 @@ object StockTweetWriterTest {
   }
   def readFromCsvWriteToDB(filename: String): Unit = {
     val file = SparkContextManager.getContext.textFile(filename)
-    val tweets = file.map(line => line.split("\",\"").map(x => x.replaceAll("\"", ""))).map(arr => StockTweet(arr(0), arr(2),arr(5) ,Instant.parse(arr(4)), symbol = Some(arr(8))))
+    val tweets = file.map(line => line.split("\",\"").map(x => x.replaceAll("\"", ""))).
+      map(arr =>
+        StockTweet(arr(0), arr(2),arr(5) ,Instant.parse(arr(4)), symbol = Some(arr(8)),
+          sentiment = if (arr(9).isEmpty) None else if (arr(9)== "Bearish") Some(Sentiment.NEGATIVE) else if (arr(9) == "Bullish") Some(Sentiment.NEGATIVE) else None )
+      )
     tweets.foreach(StockTweetWriter.write)
   }
 
