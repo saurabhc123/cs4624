@@ -1,4 +1,6 @@
 package main.Hbase
+
+
 import org.apache.hadoop.hbase.HBaseConfiguration
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.util.Bytes
@@ -29,6 +31,10 @@ import org.apache.hadoop.hbase.filter.BinaryComparator
       put.add(Bytes.toBytes(columnFamily), Bytes.toBytes(column), Bytes.toBytes(value))
 
       // put the data in the table
+      table.put(put)
+    }
+
+    def put(put: Put): Unit ={
       table.put(put)
     }
 
