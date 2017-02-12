@@ -1,7 +1,11 @@
 package main.Hbase
 
-import main.StockTweet
-import org.apache.hadoop.hbase.client.Put
+import java.time.Instant
+
+import main.{Sentiment, StockTweet}
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.hbase.client.{Get, Put, Scan}
+import org.apache.hadoop.hbase.filter.{Filter, RowFilter}
 import org.apache.hadoop.hbase.util.Bytes
 
 /**
@@ -29,6 +33,51 @@ object StockTweetWriter {
       put.addColumn(Bytes.toBytes("options"), Bytes.toBytes("sentiment"), Bytes.toBytes(stockTweet.sentiment.get.toString))
     }
     interactor.put(put)
+  }
+
+  def read(tweetID: String): StockTweet = {
+    val get = new Get(Bytes.toBytes(tweetID))
+    get.addFamily(Bytes.toBytes("base_data")).addFamily(Bytes.toBytes("options"))
+    val result = interactor.get(get)
+    var cell = result.getColumnLatestCell(Bytes.toBytes("base_data"), Bytes.toBytes("timestamp"))
+    val ts = Bytes.toString(cell.getValueArray, cell.getValueOffset, cell.getValueLength)
+    cell = result.getColumnLatestCell(Bytes.toBytes("base_data"), Bytes.toBytes("text"))
+    val text = Bytes.toString(cell.getValueArray, cell.getValueOffset, cell.getValueLength)
+
+
+    cell = result.getColumnLatestCell(Bytes.toBytes("base_data"), Bytes.toBytes("judgeid"))
+    var jid:String = null
+    if (cell != null) {
+      jid = Bytes.toString(cell.getValueArray, cell.getValueOffset, cell.getValueLength)
+    }
+    cell = result.getColumnLatestCell(Bytes.toBytes("options"), Bytes.toBytes("sentimentorder"))
+    var sentO:String = null
+    if (cell != null) {
+      sentO = Bytes.toString(cell.getValueArray, cell.getValueOffset, cell.getValueLength)
+    }
+    cell = result.getColumnLatestCell(Bytes.toBytes("options"), Bytes.toBytes("rawPredictionScore"))
+    var rawScore : String = null
+    if (cell != null) {
+      rawScore = Bytes.toString(cell.getValueArray, cell.getValueOffset, cell.getValueLength)
+    }
+
+    cell = result.getColumnLatestCell(Bytes.toBytes("options"), Bytes.toBytes("symbol"))
+    var symbol : String = null
+    if (cell != null) {
+      symbol = Bytes.toString(cell.getValueArray, cell.getValueOffset, cell.getValueLength)
+    }
+    cell = result.getColumnLatestCell(Bytes.toBytes("options"), Bytes.toBytes("sentiment"))
+    var sentiment : String = null
+    if (cell != null) {
+      sentiment = Bytes.toString(cell.getValueArray, cell.getValueOffset, cell.getValueLength)
+    }
+
+    StockTweet(id = tweetID, text = text, judgeId = jid, timestamp = Instant.parse(ts),
+      rawPredictionScore = if (rawScore != null) Some(rawScore.toDouble) else None,
+      sentiment = if (sentiment != null) Some(Sentiment.withName(sentiment)) else None,
+      symbol = Option(symbol),
+      sentimentOrder = if (sentO != null) Some(sentO.toInt) else None
+    )
   }
 
 }
