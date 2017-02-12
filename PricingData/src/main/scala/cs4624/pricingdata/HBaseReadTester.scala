@@ -8,7 +8,7 @@ import org.joda.time.DateTime
   */
 object HBaseReadTester extends App {
 
-  val connection = ConnectionFactory.createConnection()
+  implicit val connection = ConnectionFactory.createConnection()
   val prices = StockPrices.query("AAPL", new DateTime(2014, 1, 1).toInstant, new DateTime(2014, 12, 31).toInstant)
   prices.foreach(println)
 

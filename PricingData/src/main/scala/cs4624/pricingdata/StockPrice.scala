@@ -43,9 +43,9 @@ object StockPrices {
     scan.addColumn(price, price)
     import scala.collection.JavaConversions._
     val prices = table.getScanner(scan).map { result =>
-      val price = Bytes.toString(result.getValue(price, price)).toDouble
+      val priceValue = Bytes.toString(result.getValue(price, price)).toDouble
       val time = new Instant(result.current().getTimestamp)
-      StockPrice(symbol, time, price)
+      StockPrice(symbol, time, priceValue)
     }.toSeq
     table.close()
     prices
