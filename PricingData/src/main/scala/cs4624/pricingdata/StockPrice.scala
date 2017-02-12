@@ -12,7 +12,7 @@ case class StockPrice(symbol: String, time: Instant, price: Double) {
   def write(implicit connection: Connection): Unit = {
     val table = connection.getTable(StockPrices.tableName)
     val put = new Put(Bytes.toBytes(s"$symbol-${time.getMillis}"))
-    put.addColumn(Bytes.toBytes("price"), Bytes.toBytes("price"), time.plus(1000).getMillis, Bytes.toBytes(price.toString))
+    put.addColumn(Bytes.toBytes("price"), Bytes.toBytes("price"), time.getMillis, Bytes.toBytes(price.toString))
     table.put(put)
     table.close()
   }
