@@ -14,7 +14,7 @@ class StockPredictions(iTweetDataRetriever: ITweetDataRetriever, iStockDataRetri
   private val endTime = Instant.now()
   private val all_judges = iTweetDataRetriever.readTweets(DataType.TEST)
     .map(tweet => tweet.judgeId).distinct()
-    .map(judge => new Judge(judge, iTweetDataRetriever, iStockDataRetriever))
+    .map(judge => new Judge(judge, iStockDataRetriever, null))
 
   private var currentTime = startTime
   while (currentTime.isBefore(endTime)){
