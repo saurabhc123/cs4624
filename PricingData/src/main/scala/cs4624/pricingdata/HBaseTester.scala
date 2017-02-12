@@ -6,7 +6,7 @@ import org.apache.hadoop.hbase.client.ConnectionFactory
   * Created by joeywatts on 2/12/17.
   */
 object HBaseTester extends App {
-  val connection = ConnectionFactory.createConnection()
+  implicit val connection = ConnectionFactory.createConnection()
 
   // Read all the quotes from the CSV and print them out.
   import scala.io.Source
