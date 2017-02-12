@@ -2,7 +2,6 @@ package main
 
 import java.time.Instant
 
-import main.DataTypes.Tweet
 import org.apache.spark.rdd.RDD
 object Sentiment extends Enumeration {
   type Sentiment = Value
@@ -10,7 +9,10 @@ object Sentiment extends Enumeration {
 }
 
 import main.Sentiment.Sentiment
-case class StockTweet(symbol: String, id:String, text:String, sentiment: Sentiment, judgeId:String, timestamp: Instant, rawPredictionScore : Option[Double] = None,sentimentOrder : Option[Int] = None ){}
+case class StockTweet(id:String, text:String,
+                      judgeId:String, timestamp: Instant, rawPredictionScore : Option[Double] = None,
+                      sentiment: Option[Sentiment] = None, symbol: Option[String] = None,
+                       sentimentOrder : Option[Int] = None ){}
 /**
   * Created by Eric on 2/11/2017.
   */
@@ -27,8 +29,8 @@ object StockDecisions{
   }
   private val lambda = 0.05
   private def getRawPrediction(tweet: StockTweet): Double = {
-    val priceAtTweetTime = StockActions.getPrice(tweet.symbol, tweet.timestamp)
-    val priceAfterTimeInterval = StockActions.getPrice(tweet.symbol, tweet.timestamp.plus(Judge.confirmationTimeWindow))
+    val priceAtTweetTime = StockActions.getPrice(tweet.symbol.get, tweet.timestamp)
+    val priceAfterTimeInterval = StockActions.getPrice(tweet.symbol.get, tweet.timestamp.plus(Judge.confirmationTimeWindow))
 
     val deltaResult = (priceAfterTimeInterval - priceAtTweetTime) / priceAtTweetTime
     val opinion = if (tweet.sentiment == Sentiment.POSITIVE) 1 else -1
@@ -53,10 +55,11 @@ object StockDecisions{
   def getTweets(symbol: String, startTime: Instant, endTime: Instant): RDD[StockTweet] = {
     val text = SparkContextManager.getContext.textFile("dummy_stock_tweets.txt")
     text.map(x => x.split(','))
-      .map(x => StockTweet(x(0),"",x(1),
-           if (x(2) == "1")Sentiment.POSITIVE else Sentiment.NEGATIVE,
+      .map(x => StockTweet(x(0),x(1),
             x(3), Instant.parse(x(4))))
   }
+
+
 
 
   def getDegreesOfIndependence(tweets: RDD[StockTweet]): RDD[(StockTweet, Double)] ={

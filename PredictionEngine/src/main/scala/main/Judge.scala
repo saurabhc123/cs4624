@@ -2,7 +2,6 @@ package main
 import java.time.temporal.TemporalAmount
 import java.time.{Duration, Instant}
 
-import main.DataTypes.Tweet
 import main.Interfaces.{DataType, IStockDataRetriever, ITweetDataRetriever}
 /**
   *
@@ -12,30 +11,30 @@ import main.Interfaces.{DataType, IStockDataRetriever, ITweetDataRetriever}
 class Judge(val identifier: String, iTweetDataRetriever: ITweetDataRetriever, iStockDataRetriever: IStockDataRetriever) extends java.io.Serializable{
 
   private val myTweets = iTweetDataRetriever.readTweets(DataType.TEST)
-    .filter(tweet => tweet.time.isDefined)
-    .filter(tweet => tweet.judge.isDefined)
-    .filter(tweet => tweet.judge.get == identifier)
-    .filter(tweet => tweet.stock.isDefined)
-    .filter(tweet => tweet.label.isDefined)
+    .filter(tweet => tweet.symbol.isDefined)
+    .filter(tweet => tweet.sentiment.isDefined)
+    .filter(tweet => tweet.rawPredictionScore.isDefined)
+    .filter(tweet => tweet.sentimentOrder.isDefined)
     .cache()
+
+
   def getJudgeIndividualWeight(currentTime: Instant): Double ={
-    def tweetsBeforeTime = myTweets.filter(tweet => tweet.time.get.isBefore(currentTime.minus(Judge.confirmationTimeWindow)))
+    def tweetsBeforeTime = myTweets.filter(tweet => tweet.timestamp.isBefore(currentTime.minus(Judge.confirmationTimeWindow)))
     val rawPredictionScores = myTweets.map(tweet => getRawPrediction(tweet))
     val scoreMean = rawPredictionScores.mean()
     val scoreStdDev = rawPredictionScores.stdev()
     scoreMean / scoreStdDev
   }
 
-  private def getRawPrediction(tweet: Tweet): Double = {
+  private def getRawPrediction(tweet: StockTweet): Double = {
       val priceAtTweetTime = iStockDataRetriever
-        .getPriceOfStock(tweet.stock.get, tweet.time.get)
+        .getPriceOfStock(tweet.symbol.get, tweet.timestamp)
       val priceAfterTimeInterval = iStockDataRetriever
-        .getPriceOfStock(tweet.stock.get, tweet.time.get.plus(Judge.confirmationTimeWindow))
+        .getPriceOfStock(tweet.symbol.get, tweet.timestamp.plus(Judge.confirmationTimeWindow))
       val deltaResult = (priceAfterTimeInterval - priceAtTweetTime) / priceAtTweetTime
-      val opinion = tweet.label.get
+      val opinion = if(tweet.sentiment.get == Sentiment.POSITIVE) 1 else -1
       deltaResult * opinion
   }
-
 
 
 }
