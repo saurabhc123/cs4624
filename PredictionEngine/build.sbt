@@ -1,3 +1,5 @@
+import sbt.Keys.resolvers
+
 lazy val PredictionEngine = (project in file("."))
 .settings(
     name := "PredictionEngine",
@@ -16,6 +18,16 @@ lazy val PredictionEngine = (project in file("."))
         "org.apache.hbase" % "hbase-common" % "1.0.0-cdh5.5.1",
         "org.apache.hbase" % "hbase-client" % "1.0.0-cdh5.5.1",
         "org.apache.hbase" % "hbase-server" % "1.0.0-cdh5.5.1"
-    )
+    ) ,
+    resolvers ++= Seq(
+      "Hadoop Releases" at "https://repository.cloudera.com/content/repositories/releases/"
+      ),
+    libraryDependencies ++= Seq(
+        "com.github.nscala-time" %% "nscala-time" % "2.16.0",
+        "com.typesafe.play" %% "play-ws" % "2.4.10",
+        "com.google.guava" % "guava" % "15.0"
+
+    ),
+    dependencyOverrides += "com.google.guava" % "guava" % "15.0"
 
 )

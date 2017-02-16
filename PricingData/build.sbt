@@ -1,6 +1,7 @@
 lazy val PricingData = (project in file(".")).
   settings(
     name := "PricingData",
+    organization := "cs4624",
     scalaVersion := "2.10.4",
     resolvers ++= Seq(
       "Hadoop Releases" at "https://repository.cloudera.com/content/repositories/releases/"

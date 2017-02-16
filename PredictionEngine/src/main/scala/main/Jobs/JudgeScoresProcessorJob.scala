@@ -1,4 +1,4 @@
-package main.Jobs
+ package main.Jobs
 
 import java.time.{Duration, Instant}
 
@@ -6,6 +6,8 @@ import main.DataTypes.JudgeScore
 import main.Interfaces.IScheduledJob
 import main.{Judge, StockTweet}
 import org.apache.spark.rdd.RDD
+import main.Interfaces.IStockDataRetriever
+import main.Factories.StockDataRetrieverFactory
 
 /**
  * Created by saur6410 on 2/12/17.
@@ -54,7 +56,7 @@ class JudgeScoresProcessorJob extends IScheduledJob{
     //ToDo: The following line can be improved or optimized further.
     val tweetsGroupedByJudgeId = tweetsGroupedByJudgeIdForKeys.map(tweet => (tweet._1, relevantTweets.filter(t => t.judgeId == tweet._1)))
     //Create a snapshot of scores for all judges for that day.
-    val judges = tweetsGroupedByJudgeId.map(judgeTweetsGroup => new Judge(judgeTweetsGroup._1, null, judgeTweetsGroup._2))
+    val judges = tweetsGroupedByJudgeId.map(judgeTweetsGroup => new Judge(judgeTweetsGroup._1, StockDataRetrieverFactory.getStockDataRetriever(Instant.EPOCH, Instant.MAX), judgeTweetsGroup._2))
     val judgeScores = judges.map(judge => new JudgeScore(judge.identifier, judge.getJudgeIndividualWeight(snapshotInstant), snapshotInstant))
     return judgeScores
   }
