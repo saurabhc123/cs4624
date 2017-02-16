@@ -1,9 +1,10 @@
-lazy val predictionEngine = project
-lazy val pricingData = project
-lazy val virtualPortfolio = project.dependsOn(pricingData)
+lazy val PredictionEngine = project
+lazy val PricingData = project
+lazy val VirtualPortfolio = project.dependsOn(PricingData)
 lazy val root = (project in file("."))
 .aggregate(
-    predictionEngine,
-    pricingData,
-    virtualPortfolio
+    PredictionEngine,
+    PricingData,
+    VirtualPortfolio
 )
+retrieveManaged := true
