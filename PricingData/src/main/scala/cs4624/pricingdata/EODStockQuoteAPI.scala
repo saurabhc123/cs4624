@@ -1,6 +1,7 @@
 package cs4624.pricingdata
 
 import com.github.nscala_time.time.Imports._
+import org.joda.time.Instant
 
 import scala.concurrent.{ExecutionContext, Future}
 
