@@ -1,11 +1,12 @@
 package cs4624.pricingdata
 
-import com.github.nscala_time.time.Imports._
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ning.NingWSClient
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+
+import java.time.{LocalDate, LocalTime, ZonedDateTime, ZoneOffset}
 
 /**
   * Example of using this library to get end-of-day stock quotes.
@@ -18,7 +19,7 @@ object APITester extends App {
 
   val symbols = Seq("AAPL", "FB", "GILD", "KNDI", "MNKD", "NQ", "PLUG", "QQQ", "SPY", "TSLA", "VRNG")
   val future = Future.sequence(symbols.map { sym =>
-    api.getQuotes(symbol = sym, startDate = new LocalDate(2014, 1, 1), endDate = new LocalDate(2014, 12, 31))
+    api.getQuotes(symbol = sym, startDate = LocalDate.of(2014, 1, 1), endDate = LocalDate.of(2014, 12, 31))
   })
 
   // Await the results from the future, write to a CSV, cleanup http client.
@@ -41,5 +42,5 @@ object APITester extends App {
   //quotes.foreach(println)
   val prices = quotes.flatMap(q => q.openStockPrice :: q.closeStockPrice :: Nil)
   import StockPrices._ // Import the implicit class with the "getPrice" method.
-  println(prices.getPrice("AAPL", new DateTime(2014, 6, 26, 12, 14, DateTimeZone.UTC).toInstant))
+  println(prices.getPrice("AAPL", ZonedDateTime.of(LocalDate.of(2014, 6, 26), LocalTime.of(12, 14), ZoneOffset.UTC).toInstant))
 }

@@ -2,10 +2,10 @@ package cs4624.pricingdata
 
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ning.NingWSClient
-import com.github.nscala_time.time.Imports._
 import play.api.libs.json._
 import play.api.libs.json.Reads._
 import play.api.libs.functional.syntax._
+import java.time.LocalDate
 
 import scala.concurrent.{ExecutionContext, Future}
 

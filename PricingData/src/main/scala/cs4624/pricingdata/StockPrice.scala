@@ -3,7 +3,7 @@ package cs4624.pricingdata
 import org.apache.hadoop.hbase.TableName
 import org.apache.hadoop.hbase.client.{Connection, Get, Put, Scan}
 import org.apache.hadoop.hbase.util.Bytes
-import org.joda.time.{DateTime, Instant}
+import java.time.{Instant}
 
 /**
   * Created by joeywatts on 2/12/17.
@@ -11,8 +11,8 @@ import org.joda.time.{DateTime, Instant}
 case class StockPrice(symbol: String, time: Instant, price: Double) {
   def write(implicit connection: Connection): Unit = {
     val table = connection.getTable(StockPrices.tableName)
-    val put = new Put(Bytes.toBytes(s"$symbol-${time.getMillis}"))
-    put.addColumn(Bytes.toBytes("price"), Bytes.toBytes("price"), time.getMillis, Bytes.toBytes(price.toString))
+    val put = new Put(Bytes.toBytes(s"$symbol-${time.toEpochMilli}"))
+    put.addColumn(Bytes.toBytes("price"), Bytes.toBytes("price"), time.toEpochMilli, Bytes.toBytes(price.toString))
     table.put(put)
     table.close()
   }
@@ -25,7 +25,7 @@ object StockPrices {
   implicit class RichTraversableOnce(val trav: TraversableOnce[StockPrice]) {
     def getPrice(symbol: String, instant: Instant): Option[Double] = {
       val filtered = trav.filter(price => price.symbol == symbol && price.time.isBefore(instant))
-      if (filtered.isEmpty) None else Some(filtered.maxBy(_.time.getMillis).price)
+      if (filtered.isEmpty) None else Some(filtered.maxBy(_.time.toEpochMilli).price)
     }
   }
 
@@ -41,11 +41,11 @@ object StockPrices {
     scan.setRowPrefixFilter(Bytes.toBytes(s"$symbol-"))
     val price = Bytes.toBytes("price")
     scan.addColumn(price, price)
-    scan.setTimeRange(start.getMillis, end.getMillis)
+    scan.setTimeRange(start.toEpochMilli, end.toEpochMilli)
     import scala.collection.JavaConversions._
     val prices = table.getScanner(scan).map { result =>
       val priceValue = Bytes.toString(result.getValue(price, price)).toDouble
-      val time = new Instant(result.rawCells()(0).getTimestamp)
+      val time = Instant.ofEpochMilli(result.rawCells()(0).getTimestamp)
       StockPrice(symbol, time, priceValue)
     }.toSeq
     table.close()

@@ -1,12 +1,14 @@
-lazy val PredictionEngine = project
-lazy val PricingData = project
+lazy val common = project
+lazy val PredictionEngine = project.dependsOn(common)
+lazy val PricingData = project.dependsOn(common)
 lazy val VirtualPortfolio = project.dependsOn(PricingData)
 lazy val root = (project in file("."))
-.aggregate(
+  .aggregate(
+    common,
     PredictionEngine,
     PricingData,
     VirtualPortfolio
-)
+  )
 retrieveManaged := true
 
 // Exclude Emacs autosave files.

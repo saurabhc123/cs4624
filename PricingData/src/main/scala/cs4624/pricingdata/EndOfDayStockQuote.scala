@@ -1,7 +1,7 @@
 package cs4624.pricingdata
 
-import com.github.nscala_time.time.Imports._
-import org.joda.time.Instant
+import java.time.{Instant, LocalDate, ZoneOffset}
+import java.time.temporal.ChronoUnit
 
 /**
   * Created by joeywatts on 2/6/17.
@@ -36,8 +36,8 @@ object EndOfDayStockQuote {
 }
 
 object EndOfDayStockQuotes {
-  def openInstant(date: LocalDate): Instant = date.toDateTimeAtStartOfDay(DateTimeZone.UTC).toInstant
-  def closeInstant(date: LocalDate): Instant = date.toDateTimeAtStartOfDay(DateTimeZone.UTC).millisOfDay().withMaximumValue().toInstant
+  def openInstant(date: LocalDate): Instant = date.atStartOfDay(ZoneOffset.UTC).toInstant
+  def closeInstant(date: LocalDate): Instant = date.atStartOfDay(ZoneOffset.UTC).plusDays(1).minus(1, ChronoUnit.MILLIS).toInstant
   def fromCsv(lines: TraversableOnce[String]): Seq[EndOfDayStockQuote] = {
     lines.map(EndOfDayStockQuote.fromCsv).toSeq
   }
