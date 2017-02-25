@@ -22,4 +22,7 @@ lazy val PredictionEngine = (project in file("."))
     "com.google.guava" % "guava" % "15.0",
     "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4"
   )
-).dependsOn(Project(id="PricingData", base=file("../PricingData")))
+).dependsOn(
+  Project(id="PricingData", base=file("../PricingData")),
+  Project(id="VirtualPortfolio", base=file("../VirtualPortfolio"))
+)

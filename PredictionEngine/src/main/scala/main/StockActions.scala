@@ -41,9 +41,9 @@ object StockActions {
       case _ => Action.HOLD
     }
   }
-  def getActions(stocks: List[String], startTime : Instant, endTime : Instant): List[Action] = {
+  def getActions(stocks: List[String], startTime : Instant, endTime : Instant): List[(String, Action)] = {
     stockPricingCache = stocks.map { stock => (stock, StockPrices.query(stock, startTime.minus(5, ChronoUnit.DAYS), endTime)) }.toMap
-    stocks.map(stock => getAction(stock, startTime, endTime))
+    stocks.map(stock => (stock, getAction(stock, startTime, endTime)))
   }
 
 
