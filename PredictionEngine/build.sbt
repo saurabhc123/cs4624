@@ -11,11 +11,15 @@ lazy val PredictionEngine = (project in file("."))
         "Cloudera repos" at "https://repository.cloudera.com/artifactory/cloudera-repos",
         "Cloudera releases" at "https://repository.cloudera.com/artifactory/libs-release"
     ),
-    libraryDependencies ++= Seq(
-        "org.apache.hbase" % "hbase" % "1.2.3",
-        "org.apache.hbase" % "hbase-common" % "1.0.0-cdh5.5.1",
-        "org.apache.hbase" % "hbase-client" % "1.0.0-cdh5.5.1",
-        "org.apache.hbase" % "hbase-server" % "1.0.0-cdh5.5.1"
-    )
-
-)
+  libraryDependencies ++= Seq(
+      "com.google.guava" % "guava" % "15.0",
+      "org.apache.hadoop" % "hadoop-common" % "2.6.0" excludeAll ExclusionRule(organization = "javax.servlet"),
+      "org.apache.hadoop" % "hadoop-mapred" % "0.22.0",
+      "org.apache.hbase" % "hbase-common" % "1.0.0",
+      "org.apache.hbase" % "hbase-client" % "1.0.0"
+    ),
+  dependencyOverrides ++= Set(
+    "com.google.guava" % "guava" % "15.0",
+    "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4"
+  )
+).dependsOn(Project(id="PricingData", base=file("../PricingData")))

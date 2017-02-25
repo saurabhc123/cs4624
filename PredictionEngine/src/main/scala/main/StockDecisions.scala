@@ -29,8 +29,8 @@ object StockDecisions{
   }
   private val lambda = 0.05
   private def getRawPrediction(tweet: StockTweet): Double = {
-    val priceAtTweetTime = StockActions.getPrice(tweet.symbol.get, tweet.timestamp)
-    val priceAfterTimeInterval = StockActions.getPrice(tweet.symbol.get, tweet.timestamp.plus(Judge.confirmationTimeWindow))
+    val priceAtTweetTime = StockActions.getPrice(tweet.symbol.get, tweet.timestamp).get
+    val priceAfterTimeInterval = StockActions.getPrice(tweet.symbol.get, tweet.timestamp.plus(Judge.confirmationTimeWindow)).get
 
     val deltaResult = (priceAfterTimeInterval - priceAtTweetTime) / priceAtTweetTime
     val opinion = if (tweet.sentiment == Sentiment.POSITIVE) 1 else -1

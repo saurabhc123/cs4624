@@ -7,7 +7,7 @@ import java.time.temporal.TemporalAmount
   * Created by Eric on 2/12/2017.
   */
 object StockOrchestrator {
-  private val stocks = List("AAPL", "FB", "GILD", "KNDI", "MNKD", "NQ", "PLUG", "QQQ", "SPY", "TSLA", "VRNG")
+  private val stocks = List("AAPL", "FB", "GILD", "KNDI", "MNKD", "NQ", "PLUG", "QQQ", "SPY", "TSLA")
   def Orchestrate(startTime : Instant, endTime: Instant, timeWindow: TemporalAmount, judgeWindow: TemporalAmount) : Unit = {
     Judge.confirmationTimeWindow = judgeWindow
     var currentTime = startTime.plus(timeWindow)
