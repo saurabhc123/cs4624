@@ -16,7 +16,7 @@ For more information on how to build this project and some helpful tricks for de
 
 ### Common
 
-The "common" subproject contains general purpose code that shouldn't be tied to any one module. For example, some of our shared code to access HBase is stored here because multiple other modules depend on it.
+The "common" subproject contains general purpose code that shouldn't be tied to any one module. For example, Spark configuration code and HBase data access helpers.
 
 ### Prediction Engine
 

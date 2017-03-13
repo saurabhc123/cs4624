@@ -1,14 +1,14 @@
 lazy val common = project
   .settings(
-    Settings.commonSettings ++ Seq(
+    Settings.commonSettings ++ Dependencies.spark ++ Seq(
       name := "common"
     )
   )
 
-lazy val PredictionEngine = project.dependsOn(common, PricingData)
+lazy val OpinionAggregation = project.dependsOn(common, PricingData)
   .settings(
     Settings.commonSettings ++ Dependencies.spark ++ Seq(
-      name := "PredictionEngine"
+      name := "OpinionAggregation"
     )
   )
 
@@ -20,16 +20,9 @@ lazy val PricingData = project.dependsOn(common)
     )
   )
 
-lazy val VirtualPortfolio = project.dependsOn(common, PricingData)
+lazy val TradingSimulation = project.dependsOn(common, PricingData, OpinionAggregation)
   .settings(
-    Settings.commonSettings ++ Seq(
-      name := "VirtualPortfolio"
-    )
-  )
-
-lazy val TradingSimulation = project.dependsOn(common, VirtualPortfolio)
-  .settings(
-    Settings.commonSettings ++ Seq(
+    Settings.commonSettings ++ Dependencies.spark ++ Seq(
       name := "TradingSimulation"
     )
   )
@@ -37,9 +30,8 @@ lazy val TradingSimulation = project.dependsOn(common, VirtualPortfolio)
 lazy val root = (project in file("."))
   .aggregate(
     common,
-    PredictionEngine,
+    OpinionAggregation,
     PricingData,
-    VirtualPortfolio,
     TradingSimulation
   )
   .settings(Sync.task)
