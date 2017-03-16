@@ -9,5 +9,5 @@ import org.apache.spark.rdd.RDD
   */
 trait Classifier {
   def train(labeledPoints: RDD[LabeledPoint])(implicit sc: SparkContext): ClassificationModel
-  def load(file: String)(implicit sc: SparkContext): ClassificationModel
+  def load(file: String)(implicit sc: SparkContext): Option[ClassificationModel]
 }

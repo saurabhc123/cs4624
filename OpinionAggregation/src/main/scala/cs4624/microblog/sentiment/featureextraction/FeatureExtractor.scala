@@ -9,5 +9,5 @@ import org.apache.spark.rdd.RDD
   */
 trait FeatureExtractor {
   def train(data: RDD[MicroblogPost])(implicit sc: SparkContext): FeatureExtractionModel
-  def load(file: String)(implicit sc: SparkContext): FeatureExtractionModel
+  def load(file: String)(implicit sc: SparkContext): Option[FeatureExtractionModel]
 }

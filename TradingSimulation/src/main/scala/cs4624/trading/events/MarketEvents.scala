@@ -1,6 +1,6 @@
 package cs4624.trading.events
 
-import java.time.{Instant, OffsetDateTime, OffsetTime, ZoneOffset}
+import java.time._
 
 import cs4624.trading.{TradingEvent, TradingEventEmitter}
 
@@ -18,14 +18,24 @@ class MarketEventsEmitter extends TradingEventEmitter {
     var dateTime = start
 
     private def nextOpen(dateTime: OffsetDateTime): OffsetDateTime = {
-      OffsetDateTime.of(dateTime.toLocalDate.plusDays(
+      val next = OffsetDateTime.of(dateTime.toLocalDate.plusDays(
         if (!dateTime.toOffsetTime.isBefore(openTime)) 1 else 0
       ), openTime.toLocalTime, ZoneOffset.UTC)
+      next.getDayOfWeek match {
+        case DayOfWeek.SATURDAY => nextOpen(next)
+        case DayOfWeek.SUNDAY => nextOpen(next)
+        case _ => next
+      }
     }
     private def nextClose(dateTime: OffsetDateTime): OffsetDateTime = {
-      OffsetDateTime.of(dateTime.toLocalDate.plusDays(
+      val next = OffsetDateTime.of(dateTime.toLocalDate.plusDays(
         if (!dateTime.toOffsetTime.isBefore(closeTime)) 1 else 0
       ), closeTime.toLocalTime, ZoneOffset.UTC)
+      next.getDayOfWeek match {
+        case DayOfWeek.SATURDAY => nextClose(next)
+        case DayOfWeek.SUNDAY => nextClose(next)
+        case _ => next
+      }
     }
     private def peekNext: OffsetDateTime = {
       val nextOpenTime = nextOpen(dateTime)

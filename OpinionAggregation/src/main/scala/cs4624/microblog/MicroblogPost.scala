@@ -12,4 +12,4 @@ case class MicroblogPost(id: String,
                          author: MicroblogAuthor,
                          time: Instant,
                          sentiment: Option[Sentiment] = None,
-                         symbols: Seq[String] = Seq())
+                         symbols: Set[String] = Set())

@@ -8,7 +8,11 @@ import org.apache.spark.{SparkConf, SparkContext}
 object SparkContextManager {
 
   // change once it is running on the cluster
-  private val conf = new SparkConf().setAppName("StockTrading").set("spark.master", "local")
+  private val conf = new SparkConf()
+    .setAppName("StockTrading")
+    .set("spark.master", "local[8]")
+    .set("spark.hbase.host", "node1")
+
   implicit val sc = new SparkContext(conf)
 
   def getContext: SparkContext = sc

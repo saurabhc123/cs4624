@@ -5,7 +5,7 @@ import cs4624.microblog.sentiment.featureextraction.{FeatureExtractionModel, Fea
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.feature.{Word2Vec, Word2VecModel}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.mllib.linalg.{Vector, VectorPub}
+import org.apache.spark.mllib.linalg.{Vector, VectorPub, Vectors}
 
 import scala.util.Try
 
@@ -14,15 +14,22 @@ import scala.util.Try
   */
 case class Word2VecFeatureExtractionModel(model: Word2VecModel) extends FeatureExtractionModel {
 
-  override def extract(data: MicroblogPost): Vector = {
+  override def extract(data: MicroblogPost): Option[Vector] = {
     def wordFeatures(words: Iterable[String]): Iterable[Vector] = words.map(w => Try(model.transform(w)))
       .filter(_.isSuccess).map(x => x.get)
 
-    def avgWordFeatures(wordFeatures: Iterable[Vector]): Vector = VectorPub.BreezeVectorPublications(
-      wordFeatures.map(VectorPub.VectorPublications(_).toBreeze).reduceLeft((x, y) => x + y) / wordFeatures.size.toDouble)
-      .fromBreeze
+    def avgWordFeatures(wordFeatures: Iterable[Vector]): Vector = {
+      val features = wordFeatures.map(VectorPub.VectorPublications(_).toBreeze)
+      VectorPub.BreezeVectorPublications(
+        features.reduceLeft((x, y) => x + y) / wordFeatures.size.toDouble
+      ).fromBreeze
+    }
 
-    avgWordFeatures(wordFeatures(Word2VecFeatureExtraction.textToWords(data.text)))
+    val features = wordFeatures(Word2VecFeatureExtraction.textToWords(data.text))
+    if (features.isEmpty)
+      None
+    else
+      Some(avgWordFeatures(features))
   }
 
   override def save(file: String)(implicit sc: SparkContext) = {
@@ -42,7 +49,7 @@ object Word2VecFeatureExtraction extends FeatureExtractor {
 
   override def load(file: String)(implicit sc: SparkContext) = {
     val model = Word2VecModel.load(sc, file)
-    Word2VecFeatureExtractionModel(model)
+    Some(Word2VecFeatureExtractionModel(model))
   }
 
   override def train(data: RDD[MicroblogPost])(implicit sc: SparkContext) = {

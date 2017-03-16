@@ -15,7 +15,9 @@ class TradingContext(val strategy: TradingStrategy,
                      val initialPortfolio: Portfolio) {
 
   private class Events(val map: Map[TradingEventEmitter, Iterator[TradingEvent]]) extends Iterator[TradingEvent] {
-    val queue: mutable.PriorityQueue[(TradingEventEmitter, TradingEvent)] = mutable.PriorityQueue()(Ordering.by { case (_, evt) => -evt.time.toEpochMilli })
+    val queue: mutable.PriorityQueue[(TradingEventEmitter, TradingEvent)] =
+      mutable.PriorityQueue()(Ordering.by { case (_, evt) => -evt.time.toEpochMilli })
+
     map.foreach { case (emitter, iter) =>
       if (iter.hasNext)
         queue.enqueue(emitter -> iter.next)

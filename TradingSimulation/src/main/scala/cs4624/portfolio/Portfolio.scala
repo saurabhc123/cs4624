@@ -1,6 +1,7 @@
 package cs4624.portfolio
 import java.time.Instant
 
+import cs4624.common.OptionalArgument
 import cs4624.portfolio.error.TransactionError
 import cs4624.prices.sources.StockPriceDataSource
 
@@ -10,8 +11,11 @@ import cs4624.prices.sources.StockPriceDataSource
   * @param cash - the amount of cash you can use to purchase stocks
   * @param stocks - a mapping of stock symbol to the amount that you currently own.
   */
-case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map.empty.withDefaultValue(0))
+case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map.empty.withDefaultValue(0),
+                     initialCashArgument: OptionalArgument[Double] = None)
                     (implicit stockPrices: StockPriceDataSource) {
+
+  val initialCash: Double = initialCashArgument.getOrElse(cash)
 
   private def currentStockPrice(symbol: String, time: Instant = this.time): Double = {
     stockPrices.priceAtTime(symbol, time).map(_.price).getOrElse(0)
@@ -47,7 +51,8 @@ case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map
         copy(
           time = time,
           cash = cashAfterTransaction,
-          stocks = stocks.updated(symbol, amountDifferential)
+          stocks = stocks.updated(symbol, targetAmount),
+          initialCashArgument = initialCash
         )
       )
   }
@@ -64,6 +69,15 @@ case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map
     withSharesAtTargetAmount(time, symbol, stocks(symbol) - sellAmount)
   }
 
+  def withAllSharesSold(time: Instant): Portfolio = {
+    copy(
+      time = time,
+      cash = portfolioValue,
+      stocks = Map.empty.withDefaultValue(0),
+      initialCashArgument = cash
+    )
+  }
+
   /**
     * Get the current value of the shares held for a given symbol.
     * @param symbol - the stock symbol.
@@ -72,4 +86,6 @@ case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map
   def stockValue(symbol: String): Double = {
     currentStockPrice(symbol) * stocks(symbol)
   }
+
+  override def toString: String = super.toString + " Value: " + portfolioValue
 }

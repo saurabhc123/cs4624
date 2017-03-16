@@ -26,7 +26,7 @@ object LogisticRegressionClassification extends Classifier {
 
   override def load(file: String)(implicit sc: SparkContext) = {
     val model = LogisticRegressionModel.load(sc, file)
-    LogisticRegressionClassificationModel(model)
+    Some(LogisticRegressionClassificationModel(model))
   }
 
   override def train(labeledPoints: RDD[LabeledPoint])(implicit sc: SparkContext) = {

@@ -9,6 +9,6 @@ import org.apache.spark.mllib.linalg.Vector
   * Created by joeywatts on 3/1/17.
   */
 trait FeatureExtractionModel {
-  def extract(data: MicroblogPost): Vector
+  def extract(data: MicroblogPost): Option[Vector]
   def save(file: String)(implicit sc: SparkContext): Unit
 }

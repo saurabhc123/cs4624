@@ -26,17 +26,35 @@ class HBaseStockPriceDataSource(val table: HBaseStockPriceDataSource.Table)
     // this uses the HBase java API instead of the Spark API because
     // the Spark API doesn't support reverse scans.
     val scan = new Scan()
-    scan.setStartRow(Bytes.toBytes(s"${symbol}_${time.toString}"))
-    scan.setReversed(true)
+    scan.setStartRow(Bytes.toBytes(s"${symbol}_${Long.MaxValue - time.toEpochMilli}"))
     val scanner = hbaseTable.getScanner(scan)
-    if (scanner.isEmpty) None else Some(resultToStockPrice(scanner.next))
+    val result = scanner.next()
+    if (result == null) {
+      //println(s"Null result for ($symbol, $time)")
+      None
+    } else {
+      val stockPrice = resultToStockPrice(result)
+      if (stockPrice.symbol == symbol)
+        Some(stockPrice)
+      else
+        None
+    }
+
+    /*sc.hbaseTable[(String, String)](table.name)
+      .select("price:price")
+      .withStartRow(s"${symbol}_${Long.MaxValue - time.toEpochMilli}")
+      .take(1)
+      .map { case (row, price) =>
+        val s = row.split("_")
+        StockPrice(s(0), Instant.ofEpochMilli(Long.MaxValue - s(1).toLong), price.toDouble)
+      }.headOption*/
   }
 
   def resultToStockPrice(result: Result): StockPrice = {
     val rowKey = Bytes.toString(result.getRow)
     val splitRowKey = rowKey.split("_")
     val symbol = splitRowKey(0)
-    val time = Instant.parse(splitRowKey(1))
+    val time = Instant.ofEpochMilli(Long.MaxValue - splitRowKey(1).toLong)
     val price = Bytes.toString(result.getValue(HBaseStockPriceDataSource.priceCF, HBaseStockPriceDataSource.priceCQ)).toDouble
     StockPrice(symbol, time, price)
   }
@@ -46,19 +64,19 @@ class HBaseStockPriceDataSource(val table: HBaseStockPriceDataSource.Table)
                      endTime: OptionalArgument[Instant]): RDD[StockPrice] = {
     sc.hbaseTable[(String, String)](table.name)
       .select("price:price")
-      .withStartRow(s"${symbol}_${startTime.map(_.toString).getOrElse("")}")
-      .withStopRow(s"${symbol}_${endTime.map(_.toString).getOrElse("z")}") // z is used here to ensure that it will return all rows ('z' is greater than any digit)
+      .withStartRow(s"${symbol}_${startTime.map(_.toEpochMilli.toString).getOrElse("")}")
+      .withStopRow(s"${symbol}_${endTime.map(_.toEpochMilli.toString).getOrElse("z")}") // z is used here to ensure that it will return all rows ('z' is greater than any digit)
       .map { case (row, price) =>
         val s = row.split("_")
-        StockPrice(s(0), Instant.parse(s(1)), price.toDouble)
+        StockPrice(s(0), Instant.ofEpochMilli(s(1).toLong), price.toDouble)
       }
   }
 
-  def rowKey(symbol: String, time: Instant): Array[Byte] = Bytes.toBytes(symbol + "_" + time.toString)
+  def rowKey(symbol: String, time: Instant): Array[Byte] = Bytes.toBytes(symbol + "_" + (Long.MaxValue - time.toEpochMilli))
 
   def write(prices: RDD[StockPrice]): Unit = {
     prices.map(price => {
-      (price.symbol + "_" + price.time.toString, price.price.toString)
+      (price.symbol + "_" + (Long.MaxValue - price.time.toEpochMilli), price.price.toString)
     }).toHBaseTable(table.name)
       .toColumns("price:price")
       .save()
