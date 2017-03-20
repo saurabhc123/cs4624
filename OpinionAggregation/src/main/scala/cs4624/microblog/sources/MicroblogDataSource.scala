@@ -11,5 +11,5 @@ import org.apache.spark.rdd.RDD
   */
 trait MicroblogDataSource {
   def query(startTime: OptionalArgument[Instant] = None,
-            endTime: OptionalArgument[Instant] = None): RDD[MicroblogPost]
+            endTime: OptionalArgument[Instant] = None): Iterator[MicroblogPost]
 }

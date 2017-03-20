@@ -13,7 +13,7 @@ case class MicroblogPostEvent(post: MicroblogPost) extends TradingEvent {
 class MicroblogEventEmitter(microblogDataSource: MicroblogDataSource) extends TradingEventEmitter {
 
   override def eventsForInterval(start: Instant, end: Instant) = {
-    microblogDataSource.query(startTime = start, endTime = end).map(MicroblogPostEvent).toLocalIterator
+    microblogDataSource.query(startTime = start, endTime = end).map(MicroblogPostEvent)
   }
 
 }

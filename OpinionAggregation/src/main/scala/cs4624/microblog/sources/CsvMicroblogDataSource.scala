@@ -15,8 +15,8 @@ class CsvMicroblogDataSource(csvFile: String)
   extends MicroblogDataSource {
 
   override def query(startTime: OptionalArgument[Instant],
-                     endTime: OptionalArgument[Instant]): RDD[MicroblogPost] = {
-    sc.textFile(csvFile).map(CSV.parseLine).map(columns => {
+                     endTime: OptionalArgument[Instant]): Iterator[MicroblogPost] = {
+    scala.io.Source.fromFile(csvFile).getLines().map(CSV.parseLine).map(columns => {
       val author = MicroblogAuthor(columns(5))
       val sentiment = if (columns(9) == "Bearish") Some(Bearish)
       else if (columns(9) == "Bullish") Some(Bullish)

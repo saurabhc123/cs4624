@@ -6,6 +6,7 @@ import cs4624.microblog.sources.MicroblogDataSource
 import cs4624.portfolio.Portfolio
 import cs4624.prices.sources.StockPriceDataSource
 import cs4624.trading.{TradingEvent, TradingStrategy}
+import cs4624.common.OptionalArgument
 import java.time.{Duration, Instant}
 
 import cs4624.portfolio.error.TransactionError
@@ -18,7 +19,9 @@ import org.apache.log4j.LogManager
 class TestStrategy(stocks: Set[String],
                    sentimentAnalysisModel: SentimentAnalysisModel,
                    stockPriceDataSource: StockPriceDataSource,
-                   microblogDataSource: MicroblogDataSource) extends TradingStrategy {
+                   microblogDataSource: MicroblogDataSource,
+                   cashToUse: Double,
+                   fileName: OptionalArgument[String] = None) extends TradingStrategy {
 
   val aggregatedOpinions = new AggregatedOpinions(sentimentAnalysisModel, stockPriceDataSource, Duration.ofDays(3))
   private val log = LogManager.getRootLogger
@@ -48,7 +51,7 @@ class TestStrategy(stocks: Set[String],
                 if (portfolio.stocks(stock) > 0)
                   portfolio
                 else
-                  handleTrade(portfolio.withSharesPurchasedAtValue(time, stock, 0.1 * portfolio.initialCash))
+                  handleTrade(portfolio.withSharesPurchasedAtValue(time, stock, 0.1 * cashToUse))
               case (portfolio, (stock, Bearish)) =>
                 handleTrade(portfolio.withSharesSold(time, stock, portfolio.stocks(stock)))
             }

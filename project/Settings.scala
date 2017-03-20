@@ -5,7 +5,7 @@ object Settings {
 
   val commonSettings = Seq(
     organization := "cs4624",
-    scalaVersion := "2.10.4"
+    scalaVersion := "2.10.6"
   )
 
 }

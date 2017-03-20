@@ -34,13 +34,15 @@ class TradingContext(val strategy: TradingStrategy,
     override def hasNext: Boolean = queue.nonEmpty
   }
 
-  def run: Portfolio = {
+  def run(afterEvent: (Portfolio, TradingEvent) => Unit = { (_, _) => () }): Portfolio = {
     // Get events for time interval.
     val events = new Events(
       strategy.eventSources.map(emitter => (emitter, emitter.eventsForInterval(start, end))).toMap
     )
     events.foldLeft(initialPortfolio) { case (portfolio, event) =>
-      strategy.on(event, portfolio)
+      val result = strategy.on(event, portfolio)
+      afterEvent(result, event)
+      result
     }
   }
 }

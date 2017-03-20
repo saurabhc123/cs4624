@@ -11,11 +11,8 @@ import cs4624.prices.sources.StockPriceDataSource
   * @param cash - the amount of cash you can use to purchase stocks
   * @param stocks - a mapping of stock symbol to the amount that you currently own.
   */
-case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map.empty.withDefaultValue(0),
-                     initialCashArgument: OptionalArgument[Double] = None)
+case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map.empty.withDefaultValue(0))
                     (implicit stockPrices: StockPriceDataSource) {
-
-  val initialCash: Double = initialCashArgument.getOrElse(cash)
 
   private def currentStockPrice(symbol: String, time: Instant = this.time): Double = {
     stockPrices.priceAtTime(symbol, time).map(_.price).getOrElse(0)
@@ -51,8 +48,7 @@ case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map
         copy(
           time = time,
           cash = cashAfterTransaction,
-          stocks = stocks.updated(symbol, targetAmount),
-          initialCashArgument = initialCash
+          stocks = stocks.updated(symbol, targetAmount)
         )
       )
   }
@@ -73,8 +69,7 @@ case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map
     copy(
       time = time,
       cash = portfolioValue,
-      stocks = Map.empty.withDefaultValue(0),
-      initialCashArgument = cash
+      stocks = Map.empty.withDefaultValue(0)
     )
   }
 
@@ -86,6 +81,4 @@ case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map
   def stockValue(symbol: String): Double = {
     currentStockPrice(symbol) * stocks(symbol)
   }
-
-  override def toString: String = super.toString + " Value: " + portfolioValue
 }
