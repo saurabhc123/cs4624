@@ -16,24 +16,18 @@ For more information on how to build this project and some helpful tricks for de
 
 ### Common
 
-The "common" subproject contains general purpose code that shouldn't be tied to any one module. For example, Spark configuration code and HBase data access helpers.
-
-### Prediction Engine
-
-The Prediction Engine will house the base code for the implementation of our financial modelling application.
-
-This will utilize machine learning as well as sophisticated modelling of judge reliability.
+The "common" subproject contains general utilities used throughout the project.
 
 ### Pricing Data
 
 This module is responsible for providing interfaces to access stock pricing data. This data can come from various sources, so this module will hold classes that retrieve the prices from web APIs or read the prices from different file formats. Once the price data is obtained, we store this data in an HBase table.
 
-Other modules can depend on this module to query pricing data from HBase.
+Other modules can depend on this module to retrieve stock prices.
 
-### Virtual Portfolio
+### Opinion Aggregation
 
-This module maintains a virtual portfolio. It provides interfaces that help simulate an environment to buy/sell stocks.
+This module implements a method of aggregating sentiment from microblog posts. This implementation is based off of the [CrowdIQ paper]() developed with faculty from Virginia Tech. The CrowdIQ paper describes a method of modeling the reliability of microblog authors based on the dependency of their opinions on other authors as well as the accuracy of their opinions.
 
 ### Trading Simulation
 
-This module is the glue the brings the other modules together to run trading simulations.
+This subproject facilitates the simulation of a trading algorithm. It contains classes to model a virtual stock portfolio. By extending the `TradingStrategy` trait, you can define a strategy that can be used to execute stock trades in response to `TradingEvent`s.
