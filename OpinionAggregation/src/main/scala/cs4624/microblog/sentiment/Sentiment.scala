@@ -7,8 +7,14 @@ sealed trait Sentiment {
   def label: Double
 }
 object Sentiment {
-  def fromLabel(label: Double): Sentiment = {
-    if (label < 0.9) Bearish else Bullish
+  def fromLabel(label: Double): Option[Sentiment] = {
+    label match {
+      case 1.0 => Some(Bullish)
+      case 0.0 => Some(Bearish)
+      case label => 
+        println(label)
+        None
+    }
   }
 }
 case object Bullish extends Sentiment {

@@ -19,7 +19,7 @@ class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
 
   private val stockSentimentSum = mutable.Map[(String, Sentiment), Double]().withDefaultValue(0.0)
   private val authorContributions = mutable.Map[MicroblogAuthor, MicroblogAuthorContributions]()
-  private val sentimentCount = mutable.Map[Sentiment, Long]().withDefaultValue(0L)
+  private val sentimentCount = mutable.Map[(String, Sentiment), Long]().withDefaultValue(1L)
   private val log = LogManager.getRootLogger
 
   private val lambda = 0.05
@@ -29,33 +29,35 @@ class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
     while (postsToProcess.headOption.exists(_.time.isBefore(post.time.minus(opinionConfirmationTimeWindow)))) {
       val postToProcess = postsToProcess.dequeue()
       val postScore = rawPostScore(postToProcess)
-      val authorContribution = authorContributions.get(postToProcess.author) match {
+      authorContributions.get(postToProcess.author) match {
         case Some(currentAuthorContribution) =>
           currentAuthorContribution.transform(postToProcess, postScore)
+          currentAuthorContribution
         case None =>
-          MicroblogAuthorContributions(
+          val currentAuthorContribution = new MicroblogAuthorContributions(
             meanOfPostScores = postScore,
             sumOfSquaredDifferencesFromMean = 0,
             numberOfPosts = 1
           )
+          authorContributions.update(postToProcess.author, currentAuthorContribution)
       }
-      authorContributions.update(postToProcess.author, authorContribution)
     }
 
     val postWithSentiment = post.copy(sentiment = post.sentiment.orElse {
-      sentimentAnalysisModel.predict(post).map(Sentiment.fromLabel)
+      sentimentAnalysisModel.predict(post).flatMap(Sentiment.fromLabel)
     })
     postWithSentiment.sentiment match {
       case Some(sentiment) => {
-        val sentimentOrder = sentimentCount(sentiment)
-
-        sentimentCount(sentiment) += 1
         // update stock aggregated opinion
-        val degreeOfIndependence = Math.exp(1 - lambda * (sentimentOrder - 1))
         val authorContribution = authorContributions.get(post.author)
         authorContribution match {
           case Some(ac) if !ac.weight.isNaN && !ac.weight.isInfinity =>
-            stockSentimentSum((postWithSentiment.symbols.head, sentiment)) += degreeOfIndependence * ac.weight
+            postWithSentiment.symbols.foreach(symbol => {
+              val sentimentOrder = sentimentCount((symbol, sentiment))
+              sentimentCount((symbol, sentiment)) += 1
+              val degreeOfIndependence = Math.exp(1 - lambda * (sentimentOrder - 1))
+              stockSentimentSum((symbol, sentiment)) += degreeOfIndependence * ac.weight
+            })
           case _ =>
         }
       }
@@ -67,42 +69,40 @@ class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
 
   // TODO: handle time interval better.
   def opinionForStock(stock: String, timeInterval: (Instant, Instant)): Double = {
-    val bullishSum = stockSentimentSum((stock, Bullish))
-    val bearishSum = stockSentimentSum((stock, Bearish))
+    val bullishSum = Math.max(0, stockSentimentSum((stock, Bullish)))
+    val bearishSum = Math.max(0, stockSentimentSum((stock, Bearish)))
     val sum = bullishSum + bearishSum
     if (sum == 0)
-      return 0
+      return 0.5
     val bullishWeight = bullishSum / sum
     val bearishWeight = bearishSum / sum
+    log.info(s"Bullish Weight: $bullishWeight Bearish Weight: $bearishWeight")
+    1 - 0.5 * (Math.pow(1 - bullishWeight, 2) + Math.pow(- bearishWeight, 2))
 
-    // ?
-    val a = 100
-    val b = -50
-    // ?
-
-    val (startTime, endTime) = timeInterval
+    /*val (startTime, endTime) = timeInterval
     (stockPriceDataSource.priceAtTime(stock, startTime).map(_.price),
       stockPriceDataSource.priceAtTime(stock, endTime).map(_.price)) match {
         case (Some(startPrice), Some(endPrice)) =>
           if (endPrice > startPrice) {
-            a + b * (Math.pow(1 - bullishWeight, 2) + Math.pow(- bearishWeight, 2))
+            1 - 0.5 * (Math.pow(1 - bullishWeight, 2) + Math.pow(- bearishWeight, 2))
           } else {
-            a + b * (Math.pow(- bullishWeight, 2) + Math.pow(1 - bearishWeight, 2))
+            1 - 0.5 * (Math.pow(- bullishWeight, 2) + Math.pow(1 - bearishWeight, 2))
           }
         case _ => 0
-      }
+      }*/
   }
 
-  def sentimentForStock(stock: String, interval: (Instant, Instant)): Sentiment = opinionForStock(stock, interval) match {
-    case opinion if opinion >= 90 =>
-      Bullish
-    case opinion if opinion < 90 =>
-      Bearish
-    case _ => Bearish
+  def sentimentForStock(stock: String, interval: (Instant, Instant)): Option[Sentiment] = {
+    val opinion = opinionForStock(stock, interval)
+    log.info(s"Opinion for $stock: $opinion")
+    if (opinion >= 0.9) Some(Bullish)
+    else if (opinion <= 0.1) Some(Bearish)
+    else None
   }
 
-  def resetSentimentCounts(): Unit = {
+  def reset(): Unit = {
     sentimentCount.clear()
+    stockSentimentSum.clear()
   }
 
   private def rawPostScore(post: MicroblogPost): Double = {

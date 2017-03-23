@@ -1,5 +1,7 @@
 package cs4624.microblog
 
+import cs4624.common.App
+
 import cs4624.microblog.sentiment.{Bearish, Bullish, SentimentAnalysisModel}
 import cs4624.microblog.sources.{CsvMicroblogDataSource, SparkHBaseMicroblogDataSource}
 import cs4624.microblog.sources.SparkHBaseMicroblogDataSource.Default

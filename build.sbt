@@ -3,7 +3,8 @@ import sbtsparksubmit.SparkSubmitPlugin.autoImport._
 lazy val common = project
   .settings(
     Settings.commonSettings ++ Dependencies.spark ++ Seq(
-      name := "common"
+      name := "common",
+      libraryDependencies += "com.typesafe.play" %% "play-ws" % "2.4.10"
     )
   )
 

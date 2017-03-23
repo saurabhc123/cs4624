@@ -5,22 +5,20 @@ import cs4624.microblog.MicroblogPost
 /**
   * Created by joeywatts on 3/15/17.
   */
-case class MicroblogAuthorContributions(meanOfPostScores: Double,
-                                        sumOfSquaredDifferencesFromMean: Double,
-                                        numberOfPosts: Int) {
+class MicroblogAuthorContributions(var meanOfPostScores: Double,
+                                   var sumOfSquaredDifferencesFromMean: Double,
+                                   var numberOfPosts: Int) {
 
-  val varianceOfPostScores: Double = sumOfSquaredDifferencesFromMean / numberOfPosts
-  val standardDeviationOfTweetScores: Double = Math.sqrt(varianceOfPostScores)
-  val weight: Double = meanOfPostScores / standardDeviationOfTweetScores
+  def varianceOfPostScores: Double = sumOfSquaredDifferencesFromMean / numberOfPosts
+  def standardDeviationOfTweetScores: Double = Math.sqrt(varianceOfPostScores)
+  def weight: Double = meanOfPostScores / standardDeviationOfTweetScores
 
-  def transform(post: MicroblogPost, rawPostScore: Double): MicroblogAuthorContributions = {
+  def transform(post: MicroblogPost, rawPostScore: Double): Unit = {
     val scoreDifferenceFromCurrentMean = rawPostScore - meanOfPostScores
-    val nextMeanOfPostScores = meanOfPostScores + scoreDifferenceFromCurrentMean / (numberOfPosts + 1)
+    val nextMeanOfPostScores = (meanOfPostScores * numberOfPosts + scoreDifferenceFromCurrentMean) / (numberOfPosts + 1)
     val scoreDifferenceFromNextMean = rawPostScore - nextMeanOfPostScores
-    this.copy(
-      meanOfPostScores = nextMeanOfPostScores,
-      sumOfSquaredDifferencesFromMean = sumOfSquaredDifferencesFromMean + scoreDifferenceFromCurrentMean * scoreDifferenceFromNextMean,
-      numberOfPosts = numberOfPosts + 1
-    )
+    this.meanOfPostScores = nextMeanOfPostScores
+    this.sumOfSquaredDifferencesFromMean += scoreDifferenceFromCurrentMean * scoreDifferenceFromNextMean
+    this.numberOfPosts += 1
   }
 }

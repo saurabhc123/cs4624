@@ -9,7 +9,7 @@ import org.apache.spark.rdd.RDD
 trait StockPriceDataSource {
   def query(symbol: String,
             startTime: OptionalArgument[Instant] = None,
-            endTime: OptionalArgument[Instant] = None): RDD[StockPrice]
+            endTime: OptionalArgument[Instant] = None): Iterator[StockPrice]
 
   def priceAtTime(symbol: String, time: Instant): Option[StockPrice]
 }

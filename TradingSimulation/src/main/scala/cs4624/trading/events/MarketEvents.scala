@@ -1,7 +1,11 @@
 package cs4624.trading.events
 
+import scala.concurrent.Await
+
 import java.time._
 
+import cs4624.common.Http
+import cs4624.prices.{EODStockQuoteAPI, YahooFinanceAPI}
 import cs4624.trading.{TradingEvent, TradingEventEmitter}
 
 /**
@@ -10,63 +14,20 @@ import cs4624.trading.{TradingEvent, TradingEventEmitter}
 case class MarketOpen(override val time: Instant) extends TradingEvent
 case class MarketClose(override val time: Instant) extends TradingEvent
 
-class MarketEventsEmitter extends TradingEventEmitter {
+class MarketEventsEmitter(eodStockQuoteAPI: EODStockQuoteAPI = new YahooFinanceAPI()(Http.client)) extends TradingEventEmitter {
+
   val openTime = OffsetTime.of(8, 0, 0, 0, ZoneOffset.UTC)
   val closeTime = OffsetTime.of(17, 0, 0, 0, ZoneOffset.UTC)
-
-  private class MarketEventIterator(val start: OffsetDateTime, val end: OffsetDateTime) extends Iterator[TradingEvent] {
-    var dateTime = start
-
-    private def nextOpen(dateTime: OffsetDateTime): OffsetDateTime = {
-      val next = OffsetDateTime.of(dateTime.toLocalDate.plusDays(
-        if (!dateTime.toOffsetTime.isBefore(openTime)) 1 else 0
-      ), openTime.toLocalTime, ZoneOffset.UTC)
-      next.getDayOfWeek match {
-        case DayOfWeek.SATURDAY => nextOpen(next)
-        case DayOfWeek.SUNDAY => nextOpen(next)
-        case _ => next
-      }
-    }
-    private def nextClose(dateTime: OffsetDateTime): OffsetDateTime = {
-      val next = OffsetDateTime.of(dateTime.toLocalDate.plusDays(
-        if (!dateTime.toOffsetTime.isBefore(closeTime)) 1 else 0
-      ), closeTime.toLocalTime, ZoneOffset.UTC)
-      next.getDayOfWeek match {
-        case DayOfWeek.SATURDAY => nextClose(next)
-        case DayOfWeek.SUNDAY => nextClose(next)
-        case _ => next
-      }
-    }
-    private def peekNext: OffsetDateTime = {
-      val nextOpenTime = nextOpen(dateTime)
-      val nextCloseTime = nextClose(dateTime)
-      if (nextOpenTime.isBefore(nextCloseTime)) {
-        nextOpenTime
-      } else {
-        nextCloseTime
-      }
-    }
-
-    override def hasNext: Boolean = {
-      peekNext.isBefore(end)
-    }
-
-    override def next: TradingEvent = {
-      val nextOpenTime = nextOpen(dateTime)
-      val nextCloseTime = nextClose(dateTime)
-      if (nextOpenTime.isBefore(nextCloseTime)) {
-        dateTime = nextOpenTime
-        MarketOpen(dateTime.toInstant)
-      } else {
-        dateTime = nextCloseTime
-        MarketClose(dateTime.toInstant)
-      }
-    }
-  }
 
   override def eventsForInterval(start: Instant, end: Instant): Iterator[TradingEvent] = {
     val startDateTime = start.atOffset(ZoneOffset.UTC)
     val endDateTime = end.atOffset(ZoneOffset.UTC)
-    new MarketEventIterator(startDateTime, endDateTime)
+    val startDate = startDateTime.toLocalDate
+    val endDate = endDateTime.toLocalDate
+    import scala.concurrent.duration._
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val quotes = Await.result(eodStockQuoteAPI.getQuotes("DOW", startDate, endDate), Duration.Inf)
+    quotes.map(_.date).flatMap(date => MarketOpen(date.atTime(openTime).toInstant) :: MarketClose(date.atTime(closeTime).toInstant) :: Nil).sortBy(_.time.toEpochMilli)
+      .dropWhile(_.time.isBefore(start)).reverse.dropWhile(_.time.isAfter(end)).reverse.toIterator
   }
 }

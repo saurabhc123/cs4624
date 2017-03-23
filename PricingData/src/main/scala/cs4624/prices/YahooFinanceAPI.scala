@@ -12,7 +12,7 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * Created by joeywatts on 2/6/17.
   */
-class YahooFinanceAPI(ws: WSClient) extends EODStockQuoteAPI {
+class YahooFinanceAPI(implicit ws: WSClient) extends EODStockQuoteAPI {
   implicit val quoteReads: Reads[EndOfDayStockQuote] = ((__ \ "Symbol").read[String] and
     (__ \ "Date").read[LocalDate] and
     (__ \ "Open").read[String].map { _.toDouble } and

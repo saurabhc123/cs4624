@@ -61,11 +61,25 @@ class HBaseStockPriceDataSource(val table: HBaseStockPriceDataSource.Table)
 
   override def query(symbol: String,
                      startTime: OptionalArgument[Instant],
+                     endTime: OptionalArgument[Instant]): Iterator[StockPrice] = {
+    val scan = new Scan()
+    val startTimeMillis = startTime.getOrElse(Instant.MIN).toEpochMilli
+    val endTimeMillis = endTime.getOrElse(Instant.MAX).toEpochMilli
+    scan.setStartRow(Bytes.toBytes(s"${symbol}_${Long.MaxValue - startTimeMillis}"))
+    scan.setStopRow(Bytes.toBytes(s"${symbol}_${Long.MaxValue - endTimeMillis}"))
+    val scanner = hbaseTable.getScanner(scan)
+    scanner.iterator().map(resultToStockPrice)
+  }
+
+  def queryRDD(symbol: String,
+                     startTime: OptionalArgument[Instant],
                      endTime: OptionalArgument[Instant]): RDD[StockPrice] = {
+    val startTimeMillis = startTime.getOrElse(Instant.MIN).toEpochMilli
+    val endTimeMillis = endTime.getOrElse(Instant.MAX).toEpochMilli
     sc.hbaseTable[(String, String)](table.name)
       .select("price:price")
-      .withStartRow(s"${symbol}_${startTime.map(_.toEpochMilli.toString).getOrElse("")}")
-      .withStopRow(s"${symbol}_${endTime.map(_.toEpochMilli.toString).getOrElse("z")}") // z is used here to ensure that it will return all rows ('z' is greater than any digit)
+      .withStartRow(s"${symbol}_${Long.MaxValue - startTimeMillis}")
+      .withStopRow(s"${symbol}_${Long.MaxValue - endTimeMillis}")
       .map { case (row, price) =>
         val s = row.split("_")
         StockPrice(s(0), Instant.ofEpochMilli(s(1).toLong), price.toDouble)

@@ -20,24 +20,25 @@ class TestStrategy(stocks: Set[String],
                    sentimentAnalysisModel: SentimentAnalysisModel,
                    stockPriceDataSource: StockPriceDataSource,
                    microblogDataSource: MicroblogDataSource,
-                   cashToUse: Double,
-                   fileName: OptionalArgument[String] = None) extends TradingStrategy {
-
-  val aggregatedOpinions = new AggregatedOpinions(sentimentAnalysisModel, stockPriceDataSource, Duration.ofDays(3))
+                   fileName: OptionalArgument[String] = None) extends TradingStrategy[Map[String, Portfolio]] {
+  
+  val aggregatedOpinions = new AggregatedOpinions(sentimentAnalysisModel, stockPriceDataSource, Duration.ofDays(1))
   private val log = LogManager.getRootLogger
   var isFirst = true
   var lastTimeOption: Option[Instant] = None
+
+  //val stockPrices: Map[String, StockPriceEventEmitter] = stocks.map(s => (s, new StockPriceEventEmitter(s, stockPriceDataSource))).toMap
 
   override def eventSources = Set(
     new MicroblogEventEmitter(microblogDataSource),
     new MarketEventsEmitter()
   )
 
-  override def on(event: TradingEvent, initialPortfolio: Portfolio): Portfolio = {
+  override def on(event: TradingEvent, portfolios: Map[String, Portfolio]): Map[String, Portfolio] = {
     event match {
       case MicroblogPostEvent(post) =>
         aggregatedOpinions.on(post)
-        initialPortfolio
+        portfolios
       case MarketOpen(time) =>
         lastTimeOption match {
           case Some(lastTime) =>
@@ -45,23 +46,32 @@ class TestStrategy(stocks: Set[String],
               (stock, aggregatedOpinions.sentimentForStock(stock, (lastTime, time)))
             }
             println(opinions)
-            aggregatedOpinions.resetSentimentCounts()
-            val resultPortfolio = opinions.foldLeft(initialPortfolio) {
-              case (portfolio, (stock, Bullish)) =>
-                if (portfolio.stocks(stock) > 0)
-                  portfolio
-                else
-                  handleTrade(portfolio.withSharesPurchasedAtValue(time, stock, 0.1 * cashToUse))
-              case (portfolio, (stock, Bearish)) =>
-                handleTrade(portfolio.withSharesSold(time, stock, portfolio.stocks(stock)))
+            aggregatedOpinions.reset()
+            val resultPortfolio = opinions.foldLeft(portfolios) {
+              case (portfolioMap, (stock, Some(Bullish))) =>
+                portfolioMap.get(stock).map(portfolio =>
+                  handleTrade(portfolio.withSharesPurchasedAtValue(time, stock, portfolio.cash))
+                ) match {
+                  case Some(portfolio) => portfolioMap.updated(stock, portfolio)
+                  case None => portfolioMap
+                }
+              case (portfolioMap, (stock, Some(Bearish))) =>
+                portfolioMap.get(stock).map(portfolio =>
+                  handleTrade(portfolio.withSharesSold(time, stock, portfolio.stocks(stock)))
+                ) match {
+                  case Some(portfolio) => portfolioMap.updated(stock, portfolio)
+                  case None => portfolioMap
+                }
+              case (portfolioMap, _) => portfolioMap
             }
-            log.info(resultPortfolio)
+            resultPortfolio.foreach { kv => log.info(kv) }
+            log.info("Total portfolio value: " + resultPortfolio.map(_._2.portfolioValue).reduce(_ + _))
             resultPortfolio
           case None =>
             lastTimeOption = Some(time)
-            initialPortfolio
+            portfolios
         }
-      case _ => initialPortfolio
+      case _ => portfolios
     }
   }
 
