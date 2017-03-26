@@ -9,10 +9,10 @@ import scala.collection.mutable
 /**
   * Created by joeywatts on 2/27/17.
   */
-class TradingContext[T](val strategy: TradingStrategy[T],
+class TradingContext(val strategies: Seq[TradingStrategy],
+                     val eventSources: Seq[TradingEventEmitter],
                      val start: Instant,
-                     val end: Instant,
-                     val initialPortfolio: T) {
+                     val end: Instant) {
 
   private class Events(val map: Map[TradingEventEmitter, Iterator[TradingEvent]]) extends Iterator[TradingEvent] {
     val queue: mutable.PriorityQueue[(TradingEventEmitter, TradingEvent)] =
@@ -34,15 +34,15 @@ class TradingContext[T](val strategy: TradingStrategy[T],
     override def hasNext: Boolean = queue.nonEmpty
   }
 
-  def run(afterEvent: (T, TradingEvent) => Unit = { (_, _) => () }): T = {
+  def run(afterEvent: (TradingEvent, Seq[TradingStrategy]) => Unit = { (_, _) => () }): Seq[TradingStrategy] = {
     // Get events for time interval.
     val events = new Events(
-      strategy.eventSources.map(emitter => (emitter, emitter.eventsForInterval(start, end))).toMap
+      eventSources.map(emitter => (emitter, emitter.eventsForInterval(start, end))).toMap
     )
-    events.foldLeft(initialPortfolio) { case (portfolio, event) =>
-      val result = strategy.on(event, portfolio)
-      afterEvent(result, event)
-      result
+    events.foldLeft(strategies) { case (strategies, event) =>
+      val strategiesAfterEvent = strategies.map(_.on(event))
+      afterEvent(event, strategiesAfterEvent)
+      strategiesAfterEvent
     }
   }
 }

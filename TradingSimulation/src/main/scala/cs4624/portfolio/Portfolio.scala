@@ -14,15 +14,15 @@ import cs4624.prices.sources.StockPriceDataSource
 case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map.empty.withDefaultValue(0))
                     (implicit stockPrices: StockPriceDataSource) {
 
-  private def currentStockPrice(symbol: String, time: Instant = this.time): Double = {
-    stockPrices.priceAtTime(symbol, time).map(_.price).getOrElse(0)
+  private def currentStockPrice(symbol: String, time: Instant = this.time): Option[Double] = {
+    stockPrices.priceAtTime(symbol, time).map(_.price)
   }
 
   /**
     * @return total value of this portfolio (sum of cash and all owned stock values)
     */
   def portfolioValue: Double = stocks.foldLeft(cash) { case (value, (symbol, amount)) =>
-    value + currentStockPrice(symbol) * amount
+    value + currentStockPrice(symbol).getOrElse(0.0) * amount
   }
 
   def withTime(time: Instant): Portfolio = copy(time = time)
@@ -35,22 +35,25 @@ case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map
     * @return a Portfolio with this transaction completed or an error detailing why the transaction did not occur.
     */
   def withSharesAtTargetAmount(time: Instant, symbol: String, targetAmount: Int): Either[Portfolio, TransactionError] = {
-    val stockPrice = currentStockPrice(symbol, time = time)
-    val amountDifferential = targetAmount - stocks(symbol)
-    val cashDifferential = amountDifferential * stockPrice
-    val cashAfterTransaction = cash - cashDifferential
-    if (targetAmount < 0)
-      Right(TransactionError(this, s"Attempted to sell shares of $$$symbol that are not owned."))
-    else if (cashAfterTransaction < 0)
-      Right(TransactionError(this, s"Not enough cash remaining to buy $amountDifferential shares of $$$symbol."))
-    else
-      Left(
-        copy(
-          time = time,
-          cash = cashAfterTransaction,
-          stocks = stocks.updated(symbol, targetAmount)
-        )
-      )
+    currentStockPrice(symbol, time = time) match {
+      case Some(stockPrice) =>
+        val amountDifferential = targetAmount - stocks(symbol)
+        val cashDifferential = amountDifferential * stockPrice
+        val cashAfterTransaction = cash - cashDifferential
+        if (targetAmount < 0)
+          Right(TransactionError(this, s"Attempted to sell shares of $$$symbol that are not owned."))
+        else if (cashAfterTransaction < 0)
+          Right(TransactionError(this, s"Not enough cash remaining to buy $amountDifferential shares of $$$symbol."))
+        else
+          Left(
+            copy(
+              time = time,
+              cash = cashAfterTransaction,
+              stocks = stocks.updated(symbol, targetAmount)
+            )
+          )
+      case None => Right(TransactionError(this, s"No price found for $$$symbol."))
+    }
   }
 
   def withSharesPurchased(time: Instant, symbol: String, buyAmount: Int): Either[Portfolio, TransactionError] = {
@@ -58,7 +61,11 @@ case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map
   }
 
   def withSharesPurchasedAtValue(time: Instant, symbol: String, buyValue: Double): Either[Portfolio, TransactionError] = {
-    withSharesAtTargetAmount(time, symbol, stocks(symbol) + (buyValue / currentStockPrice(symbol, time = time)).toInt)
+    currentStockPrice(symbol, time = time) match {
+      case Some(stockPrice) =>
+        withSharesAtTargetAmount(time, symbol, stocks(symbol) + (buyValue / stockPrice).toInt)
+      case None => Right(TransactionError(this, s"No price found for $$$symbol."))
+    }
   }
 
   def withSharesSold(time: Instant, symbol: String, sellAmount: Int): Either[Portfolio, TransactionError] = {
@@ -79,6 +86,6 @@ case class Portfolio(time: Instant, cash: Double, stocks: Map[String, Int] = Map
     * @return the value of all of the shares in the portfolio with this symbol.
     */
   def stockValue(symbol: String): Double = {
-    currentStockPrice(symbol) * stocks(symbol)
+    currentStockPrice(symbol).getOrElse(0.0) * stocks(symbol)
   }
 }

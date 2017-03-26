@@ -1,11 +1,12 @@
 package cs4624.prices
 
 import play.api.libs.ws.WSClient
-import play.api.libs.ws.ning.NingWSClient
 import play.api.libs.json._
 import play.api.libs.json.Reads._
 import play.api.libs.functional.syntax._
 import java.time.LocalDate
+import java.net.URLDecoder
+import java.nio.charset.Charset
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -13,7 +14,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * Created by joeywatts on 2/6/17.
   */
 class YahooFinanceAPI(implicit ws: WSClient) extends EODStockQuoteAPI {
-  implicit val quoteReads: Reads[EndOfDayStockQuote] = ((__ \ "Symbol").read[String] and
+  implicit val quoteReads: Reads[EndOfDayStockQuote] = ((__ \ "Symbol").read[String].map { URLDecoder.decode(_, Charset.defaultCharset().name()) } and
     (__ \ "Date").read[LocalDate] and
     (__ \ "Open").read[String].map { _.toDouble } and
     (__ \ "High").read[String].map { _.toDouble } and

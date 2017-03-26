@@ -68,7 +68,7 @@ class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
   }
 
   // TODO: handle time interval better.
-  def opinionForStock(stock: String, timeInterval: (Instant, Instant)): Double = {
+  def opinionForStock(stock: String): Double = {
     val bullishSum = Math.max(0, stockSentimentSum((stock, Bullish)))
     val bearishSum = Math.max(0, stockSentimentSum((stock, Bearish)))
     val sum = bullishSum + bearishSum
@@ -92,8 +92,8 @@ class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
       }*/
   }
 
-  def sentimentForStock(stock: String, interval: (Instant, Instant)): Option[Sentiment] = {
-    val opinion = opinionForStock(stock, interval)
+  def sentimentForStock(stock: String): Option[Sentiment] = {
+    val opinion = opinionForStock(stock)
     log.info(s"Opinion for $stock: $opinion")
     if (opinion >= 0.9) Some(Bullish)
     else if (opinion <= 0.1) Some(Bearish)

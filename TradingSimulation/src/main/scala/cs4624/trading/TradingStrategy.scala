@@ -5,7 +5,7 @@ import cs4624.portfolio.Portfolio
 /**
   * A trading strategy simply manipulates a portfolio by reacting to data received from various events.
   */
-trait TradingStrategy[T] {
-  def eventSources: Set[TradingEventEmitter]
-  def on(event: TradingEvent, portfolio: T): T
+trait TradingStrategy {
+  def currentPortfolio: Portfolio
+  def on(event: TradingEvent): TradingStrategy
 }

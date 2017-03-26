@@ -14,7 +14,7 @@ object HBaseTester extends App {
 
   // Read all the quotes from the CSV and print them out.
   import scala.io.Source
-  val quotes = EndOfDayStockQuotes.fromCsv(Source.fromFile("2014quotes.csv").getLines.drop(1))
+  val quotes = EndOfDayStockQuotes.fromCsv(Source.fromFile("vrng.csv").getLines.drop(1))
   //quotes.foreach(println)
   val prices = quotes.flatMap(q => q.openStockPrice :: q.closeStockPrice :: Nil)
   implicit val sc: SparkContext = SparkContextManager.getContext
