@@ -16,12 +16,12 @@ import scala.concurrent.{ExecutionContext, Future}
 class YahooFinanceAPI(implicit ws: WSClient) extends EODStockQuoteAPI {
   implicit val quoteReads: Reads[EndOfDayStockQuote] = ((__ \ "Symbol").read[String].map { URLDecoder.decode(_, Charset.defaultCharset().name()) } and
     (__ \ "Date").read[LocalDate] and
-    (__ \ "Open").read[String].map { _.toDouble } and
-    (__ \ "High").read[String].map { _.toDouble } and
-    (__ \ "Low").read[String].map { _.toDouble } and
-    (__ \ "Close").read[String].map { _.toDouble } and
+    (__ \ "Open").read[String].map { BigDecimal(_) } and
+    (__ \ "High").read[String].map { BigDecimal(_) } and
+    (__ \ "Low").read[String].map { BigDecimal(_) } and
+    (__ \ "Close").read[String].map { BigDecimal(_) } and
     (__ \ "Volume").read[String].map { _.toLong } and
-    (__ \ "Adj_Close").read[String].map { _.toDouble })(EndOfDayStockQuote.apply _)
+    (__ \ "Adj_Close").read[String].map { BigDecimal(_) })(EndOfDayStockQuote.apply _)
 
   override def getQuotes(symbol: String, startDate: LocalDate, endDate: LocalDate)(implicit ec: ExecutionContext): Future[Seq[EndOfDayStockQuote]] = {
     val yqlString = "select * from yahoo.finance.historicaldata where symbol = \"" + symbol +

@@ -67,7 +67,6 @@ class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
     postsToProcess += postWithSentiment
   }
 
-  // TODO: handle time interval better.
   def opinionForStock(stock: String): Double = {
     val bullishSum = Math.max(0, stockSentimentSum((stock, Bullish)))
     val bearishSum = Math.max(0, stockSentimentSum((stock, Bearish)))
@@ -78,18 +77,6 @@ class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
     val bearishWeight = bearishSum / sum
     log.info(s"Bullish Weight: $bullishWeight Bearish Weight: $bearishWeight")
     1 - 0.5 * (Math.pow(1 - bullishWeight, 2) + Math.pow(- bearishWeight, 2))
-
-    /*val (startTime, endTime) = timeInterval
-    (stockPriceDataSource.priceAtTime(stock, startTime).map(_.price),
-      stockPriceDataSource.priceAtTime(stock, endTime).map(_.price)) match {
-        case (Some(startPrice), Some(endPrice)) =>
-          if (endPrice > startPrice) {
-            1 - 0.5 * (Math.pow(1 - bullishWeight, 2) + Math.pow(- bearishWeight, 2))
-          } else {
-            1 - 0.5 * (Math.pow(- bullishWeight, 2) + Math.pow(1 - bearishWeight, 2))
-          }
-        case _ => 0
-      }*/
   }
 
   def sentimentForStock(stock: String): Option[Sentiment] = {
@@ -114,7 +101,7 @@ class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
     (stockPriceDataSource.priceAtTime(post.symbols.head, post.time).map(_.price),
       stockPriceDataSource.priceAtTime(post.symbols.head, post.time.plus(opinionConfirmationTimeWindow)).map(_.price)) match {
         case (Some(priceAtTweetTime), Some(priceAfterConfirmationWindow)) =>
-          opinion * (priceAfterConfirmationWindow - priceAtTweetTime) / priceAtTweetTime
+          opinion * ((priceAfterConfirmationWindow - priceAtTweetTime) / priceAtTweetTime).toDouble
         case _ => 0
       }
   }

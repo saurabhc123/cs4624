@@ -55,8 +55,8 @@ class HBaseStockPriceDataSource(val table: HBaseStockPriceDataSource.Table)
     val splitRowKey = rowKey.split("_")
     val symbol = splitRowKey(0)
     val time = Instant.ofEpochMilli(Long.MaxValue - splitRowKey(1).toLong)
-    val price = Bytes.toString(result.getValue(HBaseStockPriceDataSource.priceCF, HBaseStockPriceDataSource.priceCQ)).toDouble
-    StockPrice(symbol, time, price)
+    val price = Bytes.toString(result.getValue(HBaseStockPriceDataSource.priceCF, HBaseStockPriceDataSource.priceCQ))
+    StockPrice(symbol, time, BigDecimal(price))
   }
 
   override def query(symbol: String,
@@ -82,7 +82,7 @@ class HBaseStockPriceDataSource(val table: HBaseStockPriceDataSource.Table)
       .withStopRow(s"${symbol}_${Long.MaxValue - endTimeMillis}")
       .map { case (row, price) =>
         val s = row.split("_")
-        StockPrice(s(0), Instant.ofEpochMilli(s(1).toLong), price.toDouble)
+        StockPrice(s(0), Instant.ofEpochMilli(s(1).toLong), BigDecimal(price))
       }
   }
 

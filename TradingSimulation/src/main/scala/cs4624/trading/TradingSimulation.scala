@@ -28,8 +28,8 @@ object TradingSimulation extends App {
     case Some(sentimentAnalysisModel) =>
       val start = OffsetDateTime.of(2014, 1, 2, 7, 59, 59, 0, ZoneOffset.UTC).toInstant
       val end = OffsetDateTime.of(2014, 12, 31, 23, 59, 59, 999999999, ZoneOffset.UTC).toInstant
-      val strategies = symbols.toSeq.map(s => new BaselineStrategy(s, Portfolio(start, 100000), sentimentAnalysisModel, hBaseStockPriceDataSource)) ++
-        Seq(new BuyHoldStrategy("^GSPC", Portfolio(start, symbols.size * 100000.0)))
+      val strategies = symbols.toSeq.map(s => new BaselineStrategy(s, Portfolio(start, 100000, transactionFee = BigDecimal("6.0")), sentimentAnalysisModel, hBaseStockPriceDataSource)) ++
+        Seq(new BuyHoldStrategy("^GSPC", Portfolio(start, symbols.size * 100000.0, transactionFee = BigDecimal("6.0"))))
       val eventSources = Seq(new MarketEventsEmitter(), new MicroblogEventEmitter(hbaseMicroblogDataSource))
       val context = new TradingContext(strategies, eventSources, start, end)
       val printWriter = new PrintWriter("../results.csv")

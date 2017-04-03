@@ -31,10 +31,10 @@ class GoogleFinanceAPI(implicit ws: WSClient) extends EODStockQuoteAPI {
       CSV.parse(resp.body).drop(1).flatMap {
         case dateStr :: openStr :: highStr :: lowStr :: closeStr :: volumeStr :: _ =>
           val date = LocalDate.parse(dateStr, dateTimeFormatter)
-          val open = openStr.toDouble
-          val high = highStr.toDouble
-          val low = lowStr.toDouble
-          val close = closeStr.toDouble
+          val open = BigDecimal(openStr)
+          val high = BigDecimal(highStr)
+          val low = BigDecimal(lowStr)
+          val close = BigDecimal(closeStr)
           val volume = volumeStr.toLong
           Some(EndOfDayStockQuote(symbol, date, open, high, low, close, volume, close))
         case _ => None

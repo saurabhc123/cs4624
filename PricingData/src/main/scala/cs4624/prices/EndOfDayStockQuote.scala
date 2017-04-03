@@ -8,12 +8,12 @@ import java.time.temporal.ChronoUnit
   */
 case class EndOfDayStockQuote(symbol: String,
                               date: LocalDate,
-                              open: Double,
-                              high: Double,
-                              low: Double,
-                              close: Double,
+                              open: BigDecimal,
+                              high: BigDecimal,
+                              low: BigDecimal,
+                              close: BigDecimal,
                               volume: Long,
-                              adjustedClose: Double) {
+                              adjustedClose: BigDecimal) {
   def toCsv: String = s"$symbol,$date,$open,$high,$low,$close,$volume,$adjustedClose"
 
   def openStockPrice: StockPrice = StockPrice(symbol, EndOfDayStockQuotes.openInstant(date), open)
@@ -25,12 +25,12 @@ object EndOfDayStockQuote {
     EndOfDayStockQuote(
       symbol = columns(0),
       date = LocalDate.parse(columns(1)),
-      open = columns(2).toDouble,
-      high = columns(3).toDouble,
-      low = columns(4).toDouble,
-      close = columns(5).toDouble,
+      open = BigDecimal(columns(2)),
+      high = BigDecimal(columns(3)),
+      low = BigDecimal(columns(4)),
+      close = BigDecimal(columns(5)),
       volume = columns(6).toLong,
-      adjustedClose = columns(7).toDouble
+      adjustedClose = BigDecimal(columns(7))
     )
   }
 }
