@@ -88,6 +88,16 @@ class HBaseStockPriceDataSource(val table: HBaseStockPriceDataSource.Table)
 
   def rowKey(symbol: String, time: Instant): Array[Byte] = Bytes.toBytes(symbol + "_" + (Long.MaxValue - time.toEpochMilli))
 
+  def write(price: StockPrice): Unit = {
+    val put = new Put(Bytes.toBytes(s"${price.symbol}_${Long.MaxValue - price.time.toEpochMilli}"))
+    put.addColumn(
+      HBaseStockPriceDataSource.priceCF,
+      HBaseStockPriceDataSource.priceCQ,
+      Bytes.toBytes(price.price.toString)
+    )
+    hbaseTable.put(put)
+  }
+
   def write(prices: RDD[StockPrice]): Unit = {
     prices.map(price => {
       (price.symbol + "_" + (Long.MaxValue - price.time.toEpochMilli), price.price.toString)
@@ -101,6 +111,8 @@ class HBaseStockPriceDataSource(val table: HBaseStockPriceDataSource.Table)
 object HBaseStockPriceDataSource {
   sealed trait Table { def name: String }
   case object YahooFinance extends Table { override def name: String = "stockprices_yahoo" }
+  case object WRDSTrades extends Table { override def name: String = "wrdstrades" }
+  case object WRDSTradesMinuteRes extends Table { override def name: String = "wrdstrades_minuteres" }
 
   val priceCF: Array[Byte] = Bytes.toBytes("price")
   val priceCQ: Array[Byte] = Bytes.toBytes("price")

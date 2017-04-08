@@ -1,9 +1,11 @@
 package cs4624.portfolio
-import java.time.Instant
+import java.time._
 
 import cs4624.common.OptionalArgument
 import cs4624.portfolio.error.TransactionError
 import cs4624.prices.sources.StockPriceDataSource
+import cs4624.prices.splits.StockSplit
+import cs4624.prices.splits.sources.StockSplitDataSource
 
 /**
   * A class to represent a snapshot of your portfolio.
@@ -14,7 +16,8 @@ import cs4624.prices.sources.StockPriceDataSource
 case class Portfolio(time: Instant, cash: BigDecimal,
   stocks: Map[String, Int] = Map.empty.withDefaultValue(0),
   transactionFee: BigDecimal = BigDecimal("0.0"))
-  (implicit stockPrices: StockPriceDataSource) {
+  (implicit stockPrices: StockPriceDataSource,
+    stockSplits: StockSplitDataSource) {
 
   private def currentStockPrice(symbol: String, time: Instant = this.time): Option[BigDecimal] = {
     stockPrices.priceAtTime(symbol, time).map(_.price)
@@ -29,6 +32,40 @@ case class Portfolio(time: Instant, cash: BigDecimal,
 
   def withTime(time: Instant): Portfolio = copy(time = time)
 
+  def withSplitAdjustments(time: Instant): Portfolio = {
+    val startDate = OffsetDateTime.ofInstant(this.time, ZoneOffset.UTC).plusDays(1).toLocalDate
+    val endDate = OffsetDateTime.ofInstant(time, ZoneOffset.UTC).toLocalDate
+    var date = startDate
+    var result = copy(time = time)
+    while (!date.isAfter(endDate)) {
+      val splits = stocks.keys.flatMap(stockSplits.get(_, date))
+      result = splits.foldLeft(result) { (portfolio, split) => portfolio.withSplitAdjustment(split) }
+      date = date.plusDays(1)
+    }
+    result
+  }
+
+  def withSplitAdjustment(split: StockSplit): Portfolio = stocks.get(split.symbol) match {
+    case Some(amount) =>
+      val amountBefore = amount / split.beforeAmount
+      val amountAfterSplit = amountBefore * split.afterAmount
+      val fractionalShares = amount - amountBefore
+      val stockPriceBeforeSplitOpt = currentStockPrice(split.symbol, split.date.atStartOfDay().atOffset(ZoneOffset.UTC).minusSeconds(1).toInstant)
+      stockPriceBeforeSplitOpt match {
+        case Some(stockPriceBeforeSplit) =>
+          val cashValueOfFractionalShares = stockPriceBeforeSplit * fractionalShares
+          println(s"Performed $$${split.symbol} split: $amountBefore -> $amountAfterSplit")
+          this.copy(
+            cash = this.cash + cashValueOfFractionalShares,
+            stocks = this.stocks.updated(split.symbol, amountAfterSplit)
+          )
+        case None =>
+          println(s"No price found for $$${split.symbol} (before split)")
+          this
+      }
+    case None => this
+  }
+
   /**
     * Set the amount of shares for a symbol in this portfolio (selling/buying shares as needed to achieve that amount).
     * @param time - the time of this event.
@@ -37,26 +74,26 @@ case class Portfolio(time: Instant, cash: BigDecimal,
     * @return a Portfolio with this transaction completed or an error detailing why the transaction did not occur.
     */
   def withSharesAtTargetAmount(time: Instant, symbol: String, targetAmount: Int): Either[Portfolio, TransactionError] = {
+    val result = this.withTime(time)
     currentStockPrice(symbol, time = time) match {
       case Some(stockPrice) =>
         val amountDifferential = targetAmount - stocks(symbol)
         val cashDifferential = amountDifferential * stockPrice
         val cashAfterTransaction = cash - cashDifferential - transactionFee
         if (amountDifferential == 0)
-          Left(this.withTime(time))
+          Left(result)
         else if (targetAmount < 0)
-          Right(TransactionError(this, s"Attempted to sell shares of $$$symbol that are not owned."))
+          Right(TransactionError(result, s"Attempted to sell shares of $$$symbol that are not owned."))
         else if (cashAfterTransaction < 0)
-          Right(TransactionError(this, s"Not enough cash remaining to buy $amountDifferential shares of $$$symbol."))
+          Right(TransactionError(result, s"Not enough cash remaining to buy $amountDifferential shares of $$$symbol."))
         else
           Left(
-            copy(
-              time = time,
+            result.copy(
               cash = cashAfterTransaction,
               stocks = stocks.updated(symbol, targetAmount)
             )
           )
-      case None => Right(TransactionError(this, s"No price found for $$$symbol."))
+      case None => Right(TransactionError(result, s"No price found for $$$symbol."))
     }
   }
 
@@ -77,8 +114,7 @@ case class Portfolio(time: Instant, cash: BigDecimal,
   }
 
   def withAllSharesSold(time: Instant): Portfolio = {
-    copy(
-      time = time,
+    this.withTime(time).copy(
       cash = portfolioValue - transactionFee,
       stocks = Map.empty.withDefaultValue(0)
     )

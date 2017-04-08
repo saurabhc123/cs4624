@@ -17,9 +17,10 @@ class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
                          stockPriceDataSource: StockPriceDataSource,
                          opinionConfirmationTimeWindow: Duration) {
 
-  private val stockSentimentSum = mutable.Map[(String, Sentiment), Double]().withDefaultValue(0.0)
+  type Symbol = String
+  private val stockSentimentSum = mutable.Map[(Symbol, Sentiment), Double]().withDefaultValue(0.0)
   private val authorContributions = mutable.Map[MicroblogAuthor, MicroblogAuthorContributions]()
-  private val sentimentCount = mutable.Map[(String, Sentiment), Long]().withDefaultValue(1L)
+  private val sentimentCount = mutable.Map[(Symbol, Sentiment), Long]().withDefaultValue(1L)
   private val log = LogManager.getRootLogger
 
   private val lambda = 0.05
@@ -67,7 +68,7 @@ class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
     postsToProcess += postWithSentiment
   }
 
-  def opinionForStock(stock: String): Double = {
+  def opinionForStock(stock: Symbol): Double = {
     val bullishSum = Math.max(0, stockSentimentSum((stock, Bullish)))
     val bearishSum = Math.max(0, stockSentimentSum((stock, Bearish)))
     val sum = bullishSum + bearishSum

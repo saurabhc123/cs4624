@@ -1,7 +1,7 @@
 package cs4624.trading
 
 import java.io.PrintWriter
-import java.time.{Duration, Instant, OffsetDateTime, ZoneOffset}
+import java.time.{Duration, Instant, OffsetDateTime, ZoneOffset, LocalDate}
 
 import cs4624.trading.events.{MarketEventsEmitter, MarketOpen, StockPriceEventEmitter, MicroblogEventEmitter}
 import cs4624.common.spark.SparkContextManager._
@@ -10,7 +10,9 @@ import cs4624.microblog.sources.HBaseMicroblogDataSource
 import cs4624.microblog.sources.HBaseMicroblogDataSource.Default
 import cs4624.portfolio.Portfolio
 import cs4624.prices.sources.HBaseStockPriceDataSource
-import cs4624.prices.sources.HBaseStockPriceDataSource.YahooFinance
+import cs4624.prices.sources.HBaseStockPriceDataSource.WRDSTradesMinuteRes
+import cs4624.prices.splits.StockSplit
+import cs4624.prices.splits.sources.HardcodedStockSplitDataSource
 import cs4624.trading.strategies.{BaselineStrategy, BuyHoldStrategy}
 import org.apache.hadoop.hbase.client.ConnectionFactory
 import cs4624.common.App
@@ -21,7 +23,11 @@ object TradingSimulation extends App {
   implicit val hbaseConnection = ConnectionFactory.createConnection()
 
   val symbols = Set("AAPL", "FB", "GILD", "KNDI", "MNKD", "NQ", "PLUG", "QQQ", "SPY", "TSLA", "VRNG")
-  implicit val hBaseStockPriceDataSource = new HBaseStockPriceDataSource(YahooFinance)
+  implicit val hBaseStockPriceDataSource = new HBaseStockPriceDataSource(WRDSTradesMinuteRes)
+  implicit val stockSplitDataSource = new HardcodedStockSplitDataSource(Seq(
+    StockSplit("AAPL", LocalDate.of(2014, 6, 9), 7, 1),
+    StockSplit("VRNG", LocalDate.of(2015, 11, 30), 1, 10)
+  ).map(split => ((split.symbol, split.date), split)).toMap)
   val hbaseMicroblogDataSource = new HBaseMicroblogDataSource(Default)
 
   SentimentAnalysisModel.load("../cs4624_sentiment_analysis_model") match {

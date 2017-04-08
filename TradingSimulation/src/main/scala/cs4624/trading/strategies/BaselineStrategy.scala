@@ -32,6 +32,7 @@ class BaselineStrategy(stock: String,
       case MicroblogPostEvent(post) if post.symbols.contains(stock) =>
         aggregatedOpinions.on(post)
       case MarketOpen(time) =>
+        portfolio.withSplitAdjustments(time)
         lastTimeOption match {
           case Some(lastTime) =>
             val opinion = aggregatedOpinions.sentimentForStock(stock)

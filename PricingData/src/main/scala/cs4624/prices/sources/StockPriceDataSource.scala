@@ -4,7 +4,6 @@ import java.time.Instant
 
 import cs4624.common.OptionalArgument
 import cs4624.prices.StockPrice
-import org.apache.spark.rdd.RDD
 
 trait StockPriceDataSource {
   def query(symbol: String,
