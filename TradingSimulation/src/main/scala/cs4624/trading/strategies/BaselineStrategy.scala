@@ -17,13 +17,10 @@ import org.apache.log4j.LogManager
   */
 class BaselineStrategy(stock: String,
                        var portfolio: Portfolio,
-                       sentimentAnalysisModel: SentimentAnalysisModel,
                        stockPriceDataSource: StockPriceDataSource) extends TradingStrategy {
   
-  val aggregatedOpinions = new AggregatedOpinions(sentimentAnalysisModel, stockPriceDataSource, Duration.ofDays(1))
-  private val log = LogManager.getRootLogger
-  var isFirst = true
-  var lastTimeOption: Option[Instant] = None
+  val aggregatedOpinions = new AggregatedOpinions(stockPriceDataSource, Duration.ofDays(1))
+  private val log = LogManager.getLogger("Baseline")
 
   override def currentPortfolio: Portfolio = portfolio
 
@@ -32,23 +29,18 @@ class BaselineStrategy(stock: String,
       case MicroblogPostEvent(post) if post.symbols.contains(stock) =>
         aggregatedOpinions.on(post)
       case MarketOpen(time) =>
-        portfolio.withSplitAdjustments(time)
-        lastTimeOption match {
-          case Some(lastTime) =>
-            val opinion = aggregatedOpinions.sentimentForStock(stock)
-            aggregatedOpinions.reset()
-            portfolio = opinion match {
-              case Some(Bullish) =>
-                handleTrade(portfolio.withSharesPurchasedAtValue(time, stock, portfolio.cash))
-              case Some(Bearish) =>
-                handleTrade(portfolio.withSharesSold(time, stock, portfolio.stocks(stock)))
-              case None =>
-                portfolio
-            }
-            log.info(stock + " -> " + portfolio)
+        portfolio = portfolio.withSplitAdjustments(time)
+        val opinion = aggregatedOpinions.sentimentForStock(stock)
+        aggregatedOpinions.reset()
+        portfolio = opinion match {
+          case Some(Bullish) =>
+            handleTrade(portfolio.withSharesPurchasedAtValue(time, stock, portfolio.cash))
+          case Some(Bearish) =>
+            handleTrade(portfolio.withSharesSold(time, stock, portfolio.stocks(stock)))
           case None =>
-            lastTimeOption = Some(time)
+            portfolio
         }
+        log.info(stock + " -> " + portfolio)
       case _ =>
     }
     this

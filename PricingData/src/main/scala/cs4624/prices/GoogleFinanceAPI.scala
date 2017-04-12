@@ -22,8 +22,14 @@ class GoogleFinanceAPI(implicit ws: WSClient) extends EODStockQuoteAPI {
   val queryParameterFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
 
   override def getQuotes(symbol: String, startDate: LocalDate, endDate: LocalDate)(implicit ec: ExecutionContext): Future[Seq[EndOfDayStockQuote]] = {
+    getQuotes("NASDAQ", symbol, startDate, endDate)(ec)
+  }
+
+  def getQuotes(exchange: String, symbol: String,
+    startDate: LocalDate, endDate: LocalDate)(implicit ec: ExecutionContext): Future[Seq[EndOfDayStockQuote]] = {
+
     ws.url ("http://www.google.com/finance/historical").withQueryString (
-      "q" -> s"NASDAQ:$symbol",
+      "q" -> s"$exchange:$symbol",
       "startdate" -> startDate.format(queryParameterFormatter),
       "enddate" -> endDate.format(queryParameterFormatter),
       "output" -> "csv"

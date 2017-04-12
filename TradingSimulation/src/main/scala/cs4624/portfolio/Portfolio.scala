@@ -75,25 +75,37 @@ case class Portfolio(time: Instant, cash: BigDecimal,
     */
   def withSharesAtTargetAmount(time: Instant, symbol: String, targetAmount: Int): Either[Portfolio, TransactionError] = {
     val result = this.withTime(time)
-    currentStockPrice(symbol, time = time) match {
-      case Some(stockPrice) =>
-        val amountDifferential = targetAmount - stocks(symbol)
-        val cashDifferential = amountDifferential * stockPrice
-        val cashAfterTransaction = cash - cashDifferential - transactionFee
-        if (amountDifferential == 0)
-          Left(result)
-        else if (targetAmount < 0)
-          Right(TransactionError(result, s"Attempted to sell shares of $$$symbol that are not owned."))
-        else if (cashAfterTransaction < 0)
-          Right(TransactionError(result, s"Not enough cash remaining to buy $amountDifferential shares of $$$symbol."))
-        else
-          Left(
-            result.copy(
-              cash = cashAfterTransaction,
-              stocks = stocks.updated(symbol, targetAmount)
+    val amountDifferential = targetAmount - stocks(symbol)
+    if (amountDifferential == 0) Left(result)
+    else if (targetAmount < 0)
+      Right(TransactionError(result, s"Attempted to sell shares of $$$symbol that are not owned."))
+    else
+      currentStockPrice(symbol, time = time) match {
+        case Some(stockPrice) =>
+          val cashDifferential = amountDifferential * stockPrice
+          val cashAfterTransaction = cash - cashDifferential - transactionFee
+          if (cashAfterTransaction < 0)
+            Right(TransactionError(result, s"Not enough cash remaining to buy $amountDifferential shares of $$$symbol."))
+          else
+            Left(
+              result.copy(
+                cash = cashAfterTransaction,
+                stocks = stocks.updated(symbol, targetAmount)
+              )
             )
-          )
-      case None => Right(TransactionError(result, s"No price found for $$$symbol."))
+        case None => Right(TransactionError(result, s"No price found for $$$symbol."))
+      }
+  }
+
+  def withSharesAtTargetValue(time: Instant, symbol: String, totalValue: BigDecimal): Either[Portfolio, TransactionError] = {
+    if (totalValue < transactionFee) {
+      Left(this)
+    } else {
+      currentStockPrice(symbol, time = time) match {
+        case Some(stockPrice) =>
+          withSharesAtTargetAmount(time, symbol, ((totalValue - transactionFee) / stockPrice).toInt)
+        case None => Right(TransactionError(this, s"No price found for $$$symbol."))
+      }
     }
   }
 
@@ -102,10 +114,14 @@ case class Portfolio(time: Instant, cash: BigDecimal,
   }
 
   def withSharesPurchasedAtValue(time: Instant, symbol: String, buyValue: BigDecimal): Either[Portfolio, TransactionError] = {
-    currentStockPrice(symbol, time = time) match {
-      case Some(stockPrice) =>
-        withSharesAtTargetAmount(time, symbol, stocks(symbol) + ((buyValue - transactionFee) / stockPrice).toInt)
-      case None => Right(TransactionError(this, s"No price found for $$$symbol."))
+    if (buyValue < transactionFee) {
+      Left(this)
+    } else {
+      currentStockPrice(symbol, time = time) match {
+        case Some(stockPrice) =>
+          withSharesAtTargetAmount(time, symbol, stocks(symbol) + ((buyValue - transactionFee) / stockPrice).toInt)
+        case None => Right(TransactionError(this, s"No price found for $$$symbol."))
+      }
     }
   }
 
@@ -114,8 +130,9 @@ case class Portfolio(time: Instant, cash: BigDecimal,
   }
 
   def withAllSharesSold(time: Instant): Portfolio = {
+    val numberOfSecuritiesOwned = stocks.filter { case (_, count) => count > 0 }.size
     this.withTime(time).copy(
-      cash = portfolioValue - transactionFee,
+      cash = portfolioValue - numberOfSecuritiesOwned * transactionFee,
       stocks = Map.empty.withDefaultValue(0)
     )
   }

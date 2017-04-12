@@ -63,10 +63,13 @@ class HBaseStockPriceDataSource(val table: HBaseStockPriceDataSource.Table)
                      startTime: OptionalArgument[Instant],
                      endTime: OptionalArgument[Instant]): Iterator[StockPrice] = {
     val scan = new Scan()
-    val startTimeMillis = startTime.getOrElse(Instant.MIN).toEpochMilli
-    val endTimeMillis = endTime.getOrElse(Instant.MAX).toEpochMilli
-    scan.setStartRow(Bytes.toBytes(s"${symbol}_${Long.MaxValue - startTimeMillis}"))
-    scan.setStopRow(Bytes.toBytes(s"${symbol}_${Long.MaxValue - endTimeMillis}"))
+    val startTimeMillis = startTime.map(_.toEpochMilli).getOrElse(0L)
+    val endTimeMillis = endTime.map(_.toEpochMilli).getOrElse(Long.MaxValue)
+    val startRow = s"${symbol}_${Long.MaxValue - endTimeMillis}"
+    val endRow = s"${symbol}_${Long.MaxValue - startTimeMillis}"
+    println(s"startRow = $startRow, endRow = $endRow")
+    scan.setStartRow(Bytes.toBytes(startRow))
+    scan.setStopRow(Bytes.toBytes(endRow))
     val scanner = hbaseTable.getScanner(scan)
     scanner.iterator().map(resultToStockPrice)
   }
@@ -110,6 +113,7 @@ class HBaseStockPriceDataSource(val table: HBaseStockPriceDataSource.Table)
 
 object HBaseStockPriceDataSource {
   sealed trait Table { def name: String }
+  case object GoogleFinance extends Table { override def name: String = "stockprices_google" }
   case object YahooFinance extends Table { override def name: String = "stockprices_yahoo" }
   case object WRDSTrades extends Table { override def name: String = "wrdstrades" }
   case object WRDSTradesMinuteRes extends Table { override def name: String = "wrdstrades_minuteres" }

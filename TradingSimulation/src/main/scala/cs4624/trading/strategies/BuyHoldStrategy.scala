@@ -9,7 +9,7 @@ import org.apache.log4j.LogManager
 class BuyHoldStrategy(stock: String,
   var portfolio: Portfolio) extends TradingStrategy {
 
-  private val log = LogManager.getRootLogger
+  private val log = LogManager.getLogger("Buy & Hold Strategy")
 
   override def currentPortfolio: Portfolio = portfolio
 

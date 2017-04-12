@@ -13,15 +13,14 @@ import scala.collection.mutable
 /**
   * Created by joeywatts on 3/15/17.
   */
-class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
-                         stockPriceDataSource: StockPriceDataSource,
+class AggregatedOpinions(stockPriceDataSource: StockPriceDataSource,
                          opinionConfirmationTimeWindow: Duration) {
 
   type Symbol = String
   private val stockSentimentSum = mutable.Map[(Symbol, Sentiment), Double]().withDefaultValue(0.0)
   private val authorContributions = mutable.Map[MicroblogAuthor, MicroblogAuthorContributions]()
   private val sentimentCount = mutable.Map[(Symbol, Sentiment), Long]().withDefaultValue(1L)
-  private val log = LogManager.getRootLogger
+  private val log = LogManager.getLogger("AggregatedOpinions")
 
   private val lambda = 0.05
   private val postsToProcess = mutable.Queue[MicroblogPost]()
@@ -44,16 +43,13 @@ class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
       }
     }
 
-    val postWithSentiment = post.copy(sentiment = post.sentiment.orElse {
-      sentimentAnalysisModel.predict(post).flatMap(Sentiment.fromLabel)
-    })
-    postWithSentiment.sentiment match {
+    post.sentiment match {
       case Some(sentiment) => {
         // update stock aggregated opinion
         val authorContribution = authorContributions.get(post.author)
         authorContribution match {
           case Some(ac) if !ac.weight.isNaN && !ac.weight.isInfinity =>
-            postWithSentiment.symbols.foreach(symbol => {
+            post.symbols.foreach(symbol => {
               val sentimentOrder = sentimentCount((symbol, sentiment))
               sentimentCount((symbol, sentiment)) += 1
               val degreeOfIndependence = Math.exp(1 - lambda * (sentimentOrder - 1))
@@ -65,7 +61,7 @@ class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
       case None =>
         log.warn(s"Got no sentiment for post! (text: ${post.text})")
     }
-    postsToProcess += postWithSentiment
+    postsToProcess += post
   }
 
   def opinionForStock(stock: Symbol): Double = {
@@ -83,6 +79,10 @@ class AggregatedOpinions(sentimentAnalysisModel: SentimentAnalysisModel,
   def sentimentForStock(stock: String): Option[Sentiment] = {
     val opinion = opinionForStock(stock)
     log.info(s"Opinion for $stock: $opinion")
+    sentimentForOpinion(opinion)
+  }
+
+  def sentimentForOpinion(opinion: Double): Option[Sentiment] = {
     if (opinion >= 0.9) Some(Bullish)
     else if (opinion <= 0.1) Some(Bearish)
     else None
