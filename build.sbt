@@ -1,25 +1,22 @@
-import sbtsparksubmit.SparkSubmitPlugin.autoImport._
-
 lazy val common = project
   .settings(
-    Settings.commonSettings ++ Dependencies.spark ++ Seq(
-      name := "common",
-      libraryDependencies += "com.typesafe.play" %% "play-ws" % "2.4.10"
-    )
+    Settings.commonSettings ++
+      Dependencies.spark ++
+      Dependencies.playWs ++
+      Seq(name := "common")
   )
 
 lazy val OpinionAggregation = project.dependsOn(common, PricingData)
   .settings(
     Settings.commonSettings ++ Dependencies.spark ++ Seq(
       name := "OpinionAggregation"
-    ) ++ SparkSubmitSetting("runSpark", Seq("--class", "cs4624.microblog.Test"))
+    )
   )
 
 lazy val PricingData = project.dependsOn(common)
   .settings(
     Settings.commonSettings ++ Dependencies.spark ++ Seq(
-      name := "PricingData",
-      libraryDependencies += "com.typesafe.play" %% "play-ws" % "2.4.10"
+      name := "PricingData"
     )
   )
 

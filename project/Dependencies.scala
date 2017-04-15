@@ -20,4 +20,14 @@ object Dependencies {
     )
   )
 
+  // ScalaTest libraries.
+  val scalaTest = Seq(
+    libraryDependencies += "org.scalactic" %% "scalactic" % "3.0.1",
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
+  )
+
+  // Play WS library.
+  val playWs = Seq(
+    libraryDependencies += "com.typesafe.play" %% "play-ws" % "2.4.10"
+  )
 }
